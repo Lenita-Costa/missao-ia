@@ -125,10 +125,20 @@ canvas#avatar{width:56px;height:56px;border:2px solid #445;background:#1a1a2e;bo
 .mat-level-tag{font-size:3px;color:#ffaa00;margin-top:2px}
 .gargalo-area-box{background:#0a0a18;border:1px solid #223;padding:8px;margin-bottom:8px;border-radius:2px}
 .gargalo-area-title{font-size:5px;color:#ffdd44;margin-bottom:5px}
+.name-banner{background:#111128;border:2px solid #334;border-radius:4px;padding:10px 12px;margin-bottom:10px}
+.name-input{width:100%;background:#0a0a18;border:1px solid #445;color:#e0e0ff;font-family:'Press Start 2P',monospace,sans-serif;font-size:5px;padding:6px 8px;border-radius:2px;margin-top:6px;box-sizing:border-box}
+.name-input:focus{outline:none;border-color:#02FFFF}
+.btn-send{background:#002a00;color:#88ff88;border-color:#005500}
+.btn-send:hover{background:#004400;border-color:#00ff44}
 </style>
 </head>
 <body>
 <div id="app">
+
+<div class="name-banner" id="name-banner">
+  <span style="font-size:5px;color:#ffdd44;letter-spacing:1px">▶ IDENTIFICAÇÃO DO PARTICIPANTE</span><br>
+  <input class="name-input" id="name-input" type="text" placeholder="Digite seu nome completo..." oninput="saveName(this.value)" maxlength="60">
+</div>
 
 <div class="lvlup" id="lvlup">
   <div class="lvlup-title">★ LEVEL UP! ★</div>
@@ -209,6 +219,7 @@ canvas#avatar{width:56px;height:56px;border:2px solid #445;background:#1a1a2e;bo
     <div class="btn-row">
       <button class="btn btn-primary" onclick="backToMap()">CONTINUAR MAPEAMENTO ▶</button>
       <button class="btn btn-gold" onclick="exportDoc()" id="btn-export">EXPORTAR RELATÓRIO .DOCX</button>
+      <button class="btn btn-send" onclick="sendEmail()" id="btn-send">ENVIAR PARA LENITA ✉</button>
     </div>
   </div>
 </div>
@@ -216,6 +227,41 @@ canvas#avatar{width:56px;height:56px;border:2px solid #445;background:#1a1a2e;bo
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
 <script>
+let participantName = '';
+function saveName(v){ participantName = v.trim(); }
+
+function sendEmail(){
+  let visited=AREAS.filter(a=>S.areas[a.id].visited);
+  let m=calcMat();let mlvl=MAT_LEVELS[matLvlIdx(m)];
+  let today=new Date().toLocaleDateString('pt-BR');
+  let nome=participantName||'Participante não identificado';
+  let areas=visited.map(a=>`${a.name}: ${S.areas[a.id].score}%`).join(' | ')||'Nenhuma';
+  let gargalos=visited.flatMap(a=>S.areas[a.id].gargalos).slice(0,8).join(', ')||'Nenhum';
+  let ia=visited.flatMap(a=>S.areas[a.id].iaOps).map(t=>t.replace('IA:','').trim()).slice(0,5).join(', ')||'Nenhuma';
+  let diag=S.diagText||'Acesse o diagnóstico final para gerar o texto completo.';
+  let subject=encodeURIComponent(`Missão IA — Diagnóstico de ${nome} — ${today}`);
+  let body=encodeURIComponent(
+`MISSÃO IA: EVOLUÇÃO ORGANIZACIONAL — DIAGNÓSTICO
+Participante: ${nome}
+Data: ${today}
+Maturidade Geral: ${m}% — ${mlvl}
+Nível: LV${S.level}
+
+ÁREAS MAPEADAS:
+${areas}
+
+GARGALOS DETECTADOS:
+${gargalos}
+
+OPORTUNIDADES DE IA:
+${ia}
+
+DIAGNÓSTICO EXECUTIVO:
+${diag}
+`);
+  window.location.href=`mailto:lenita@fenasbac.com.br?subject=${subject}&body=${body}`;
+}
+
 function generateInsight(areaName, ans){
   const score=ans.score, tag=ans.tags[0]||'', isIA=ans.tags.some(t=>t.startsWith('IA:'));
   if(isIA){
@@ -372,7 +418,7 @@ const AREAS=[
     {txt:'Hoje o processo está bem encaminhado',tags:['BAIXA PRONTIDÃO PARA IA'],score:0,impacts:{intel:-2}},
   ]},
 ]},
-{id:'gep',icon:'📚',name:'GEP',sub:'Conhecimento',locked:true,questions:[
+{id:'gep',icon:'📚',name:'GEP',sub:'Conhecimento',locked:false,questions:[
   {block:'OPERAÇÃO',text:'Quanto tempo é gasto consolidando materiais antes de começar um projeto?',hint:'Pense na preparação antes de iniciar uma consultoria ou estudo.',answers:[
     {txt:'Muito tempo — normalmente recomeçamos do zero',tags:['RETRABALHO CRÍTICO','CONHECIMENTO NÃO REUTILIZADO'],score:0,impacts:{vel:-8,intel:-6,stress:7}},
     {txt:'Alguns dias para reunir o que existe',tags:['BUSCA MANUAL FREQUENTE'],score:1,impacts:{vel:-4,stress:4}},
@@ -436,7 +482,7 @@ const AREAS=[
     {txt:'Em geral temos boa previsibilidade',tags:['MATURIDADE OPERACIONAL'],score:2,impacts:{gov:3}},
   ]},
 ]},
-{id:'dir',icon:'👔',name:'DIRETORIA',sub:'Executivo',locked:true,questions:[
+{id:'dir',icon:'👔',name:'DIRETORIA',sub:'Executivo',locked:false,questions:[
   {block:'OPERAÇÃO',text:'Hoje existe visibilidade clara do status dos projetos estratégicos?',hint:'É fácil saber o que está em andamento, atrasado ou em risco?',answers:[
     {txt:'Não — dependemos de reuniões para saber o status',tags:['VISIBILIDADE CRÍTICA','DEPENDÊNCIA DE REUNIÃO'],score:0,impacts:{gov:-10,intel:-6,stress:5}},
     {txt:'Parcialmente — cada área reporta de forma diferente',tags:['RELATÓRIOS FRAGMENTADOS'],score:1,impacts:{gov:-5,intel:-3}},
@@ -468,7 +514,7 @@ const AREAS=[
     {txt:'O suporte atual é suficiente',tags:['BAIXA PRONTIDÃO PARA IA'],score:0,impacts:{intel:-2}},
   ]},
 ]},
-{id:'fin',icon:'💰',name:'FINANCEIRO',sub:'Controle',locked:true,questions:[
+{id:'fin',icon:'💰',name:'FINANCEIRO',sub:'Controle',locked:false,questions:[
   {block:'OPERAÇÃO',text:'Quais processos financeiros ainda dependem muito de planilhas manuais?',hint:'Pense nos controles mais críticos do dia a dia.',answers:[
     {txt:'Quase todos — planilhas são nossa principal ferramenta',tags:['DEPENDÊNCIA CRÍTICA DE PLANILHAS'],score:0,impacts:{gov:-10,risco:10,intel:-6}},
     {txt:'Processos secundários — os principais já estão em sistema',tags:['TRANSIÇÃO PARCIAL'],score:1,impacts:{gov:-3,risco:4}},
@@ -500,7 +546,7 @@ const AREAS=[
     {txt:'O processo atual não demanda automação',tags:['BAIXA PRONTIDÃO PARA IA'],score:0,impacts:{intel:-2}},
   ]},
 ]},
-{id:'audit',icon:'🔍',name:'AUDITORIA',sub:'Conformidade',locked:true,questions:[
+{id:'audit',icon:'🔍',name:'AUDITORIA',sub:'Conformidade',locked:false,questions:[
   {block:'OPERAÇÃO',text:'Quanto tempo é gasto validando evidências durante uma auditoria?',hint:'Pense na coleta e organização de documentos comprobatórios.',answers:[
     {txt:'A maioria do tempo — a busca é longa e manual',tags:['EVIDÊNCIA DESCENTRALIZADA','AUDITORIA CRÍTICA'],score:0,impacts:{vel:-8,stress:10,risco:6}},
     {txt:'Tempo considerável, mas conseguimos organizar',tags:['PROCESSO CUSTOSO'],score:1,impacts:{vel:-4,stress:5}},
@@ -532,7 +578,7 @@ const AREAS=[
     {txt:'O processo atual é suficiente',tags:['BAIXA PRONTIDÃO PARA IA'],score:0,impacts:{intel:-2}},
   ]},
 ]},
-{id:'parc',icon:'🤝',name:'PARCERIAS',sub:'Relacionamentos',locked:true,questions:[
+{id:'parc',icon:'🤝',name:'PARCERIAS',sub:'Relacionamentos',locked:false,questions:[
   {block:'OPERAÇÃO',text:'Como o histórico de parceiros e interações é acompanhado hoje?',hint:'Onde ficam os registros de reuniões e compromissos estratégicos?',answers:[
     {txt:'Na memória das pessoas e e-mails pessoais',tags:['MEMÓRIA INFORMAL','RISCO DE PERDA DE RELACIONAMENTO'],score:0,impacts:{intel:-10,risco:8,gov:-6}},
     {txt:'Anotações em planilhas sem padrão',tags:['REGISTRO FRAGMENTADO'],score:1,impacts:{intel:-4,gov:-3}},
@@ -564,7 +610,7 @@ const AREAS=[
     {txt:'O processo atual funciona bem',tags:['BAIXA PRONTIDÃO PARA IA'],score:0,impacts:{intel:-2}},
   ]},
 ]},
-{id:'cons',icon:'🏦',name:'CONSÓRCIO',sub:'Operacional',locked:true,questions:[
+{id:'cons',icon:'🏦',name:'CONSÓRCIO',sub:'Operacional',locked:false,questions:[
   {block:'OPERAÇÃO',text:'Quais atividades mais se repetem no atendimento do consórcio?',hint:'O que a equipe faz várias vezes ao dia ou semana?',answers:[
     {txt:'Responder as mesmas dúvidas por múltiplos canais',tags:['ATENDIMENTO REATIVO','DEMANDA REPETITIVA'],score:0,impacts:{vel:-6,stress:8,esc:-4}},
     {txt:'Conferir manualmente documentos e informações',tags:['CONFERÊNCIA MANUAL CRÍTICA'],score:0,impacts:{vel:-5,stress:6,risco:4}},
@@ -596,7 +642,7 @@ const AREAS=[
     {txt:'O volume atual é gerenciável',tags:['BAIXA PRONTIDÃO PARA IA'],score:0,impacts:{intel:-2}},
   ]},
 ]},
-{id:'seg',icon:'🛡️',name:'SEGUROS',sub:'Risco',locked:true,questions:[
+{id:'seg',icon:'🛡️',name:'SEGUROS',sub:'Risco',locked:false,questions:[
   {block:'OPERAÇÃO',text:'Quais solicitações chegam com mais frequência?',hint:'O que a equipe responde várias vezes por semana?',answers:[
     {txt:'Dúvidas sobre coberturas e status de sinistros',tags:['DEMANDA REPETITIVA','ATENDIMENTO MANUAL'],score:0,impacts:{vel:-5,stress:6,esc:-3}},
     {txt:'Solicitações de documentos e comprovantes',tags:['DOCUMENTAÇÃO MANUAL'],score:0,impacts:{vel:-4,stress:5}},
@@ -628,7 +674,7 @@ const AREAS=[
     {txt:'O atendimento atual é eficiente',tags:['BAIXA PRONTIDÃO PARA IA'],score:0,impacts:{intel:-2}},
   ]},
 ]},
-{id:'sec',icon:'🏛️',name:'SECRETARIA',sub:'Administrativa',locked:true,questions:[
+{id:'sec',icon:'🏛️',name:'SECRETARIA',sub:'Administrativa',locked:false,questions:[
   {block:'OPERAÇÃO',text:'Quais atividades administrativas mais consomem tempo da equipe?',hint:'O que ocupa a maior parte do dia operacional?',answers:[
     {txt:'Organizar e buscar documentos e informações',tags:['BUSCA MANUAL CRÍTICA'],score:0,impacts:{vel:-6,stress:6,intel:-5}},
     {txt:'Comunicação e agendamentos manuais',tags:['COMUNICAÇÃO MANUAL'],score:0,impacts:{vel:-5,stress:5}},

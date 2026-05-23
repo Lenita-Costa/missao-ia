@@ -195,9 +195,9 @@ canvas#avatar{width:48px;height:48px;border:2px solid #445;background:#1a1a2e;bo
     <div class="hud-name">ARQUITETO DE IA</div>
     <div class="hud-title">Missão IA: Evolução Organizacional</div>
     <div class="xp-row">
-      <span class="xp-label">XP</span>
-      <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:5%;background:#02FFFF"></div></div>
-      <span class="xp-val" id="xp-val">0/80</span>
+      <span class="xp-label">PROGRESSO</span>
+      <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%;background:#02FFFF"></div></div>
+      <span class="xp-val" id="xp-val">0/13 ÁREAS</span>
     </div>
   </div>
   <div style="text-align:right">
@@ -862,12 +862,22 @@ function gainXP(amt){
 
 function updateHUD(){
   let lv=LEVELS[S.level-1];
-  let nl=LEVELS[Math.min(S.level,5)];
-  let pct=Math.min(100,Math.round((S.xp/nl.xpMax)*100));
-  document.getElementById('xp-fill').style.width=pct+'%';
-  document.getElementById('xp-val').textContent=S.xp+'/'+nl.xpMax;
   document.getElementById('level-badge').textContent='LV '+S.level+' '+lv.name.toUpperCase();
-  document.getElementById('area-count').textContent=AREAS.filter(a=>S.areas[a.id].visited).length+'/13 ÁREAS';
+  if(S.current){
+    let area=AREAS.find(a=>a.id===S.current);
+    let total=area.questions.length;
+    let answered=S.areas[S.current].answers.length;
+    let pct=Math.min(100,Math.round((answered/total)*100));
+    document.getElementById('xp-fill').style.width=pct+'%';
+    document.getElementById('xp-val').textContent=answered+'/'+total+' PERGUNTAS';
+    document.getElementById('area-count').textContent=area.name.toUpperCase();
+  }else{
+    let visited=AREAS.filter(a=>S.areas[a.id].visited).length;
+    let pct=visited===0?0:Math.min(100,Math.round((visited/13)*100));
+    document.getElementById('xp-fill').style.width=pct+'%';
+    document.getElementById('xp-val').textContent=visited+'/13 ÁREAS';
+    document.getElementById('area-count').textContent='FENASBAC';
+  }
 }
 
 function renderStats(){
@@ -912,6 +922,7 @@ function enterArea(id){
   let a=AREAS.find(x=>x.id===id);if(!a||S.areas[id].locked)return;
   S.current=id;S.qIdx=0;show('screen-area');
   document.getElementById('interview-area').textContent=a.icon+' '+a.name+' — '+a.sub.toUpperCase();
+  updateHUD();
   renderQuestion(a);
 }
 
@@ -974,7 +985,7 @@ function finishArea(){
   gainXP(20);unlockAreas();backToMap();
 }
 
-function backToMap(){show('screen-map');renderMap();renderStats();updateHUD();}
+function backToMap(){S.current=null;show('screen-map');renderMap();renderStats();updateHUD();}
 
 async function showResult(){
   show('screen-result');

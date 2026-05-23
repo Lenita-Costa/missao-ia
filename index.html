@@ -219,7 +219,7 @@ canvas#avatar{width:56px;height:56px;border:2px solid #445;background:#1a1a2e;bo
     <div class="btn-row">
       <button class="btn btn-primary" onclick="backToMap()">CONTINUAR MAPEAMENTO ▶</button>
       <button class="btn btn-gold" onclick="exportDoc()" id="btn-export">EXPORTAR RELATÓRIO .DOCX</button>
-      <button class="btn btn-send" onclick="sendEmail()" id="btn-send">ENVIAR PARA LENITA ✉</button>
+      <button class="btn btn-send" onclick="sendEmail()" id="btn-send">ENVIAR RELATÓRIO ✉</button>
     </div>
   </div>
 </div>
@@ -259,7 +259,7 @@ ${ia}
 DIAGNÓSTICO EXECUTIVO:
 ${diag}
 `);
-  window.location.href=`mailto:lenita@fenasbac.com.br?subject=${subject}&body=${body}`;
+  window.location.href=`mailto:ti@fenasbac.com.br?subject=${subject}&body=${body}`;
 }
 
 function generateInsight(areaName, ans){

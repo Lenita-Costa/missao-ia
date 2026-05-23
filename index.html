@@ -977,12 +977,19 @@ function nextQuestion(){
   renderQuestion(area);
 }
 
-function finishArea(){
+async function finishArea(){
   let id=S.current;
   let aData=S.areas[id];
   let avgScore=aData.answers.length?Math.round((aData.answers.reduce((s,a)=>s+a.score,0)/aData.answers.length)*33):0;
   aData.visited=true;aData.score=avgScore;aData.locked=false;
-  gainXP(20);unlockAreas();backToMap();
+  gainXP(20);
+  launchConfetti();
+  let done=document.getElementById('area-done');
+  document.getElementById('area-done-score').textContent='Pontuação da área: '+avgScore+'%';
+  done.style.display='block';
+  await sleep(2000);
+  done.style.display='none';
+  unlockAreas();backToMap();
 }
 
 function backToMap(){S.current=null;show('screen-map');renderMap();renderStats();updateHUD();}
@@ -1123,8 +1130,51 @@ async function exportDoc(){
   }catch(e){console.error(e);btn.textContent='ERRO — TENTE NOVAMENTE';btn.disabled=false;}
 }
 
+function launchConfetti(){
+  const canvas=document.getElementById('confetti-canvas');
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  canvas.style.display='block';
+  const ctx=canvas.getContext('2d');
+  const colors=['#02FFFF','#ffdd44','#00ff88','#cc44ff','#ff6644','#44aaff','#ff44aa','#ffffff'];
+  const P=[];
+  for(let i=0;i<120;i++){
+    P.push({
+      x:Math.random()*canvas.width,
+      y:-20-Math.random()*canvas.height*0.4,
+      w:5+Math.random()*8,h:3+Math.random()*5,
+      color:colors[Math.floor(Math.random()*colors.length)],
+      vx:(Math.random()-0.5)*5,
+      vy:1.5+Math.random()*4,
+      rot:Math.random()*Math.PI*2,
+      rs:(Math.random()-0.5)*0.18
+    });
+  }
+  let f=0;
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    P.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;p.vy+=0.07;p.rot+=p.rs;
+      if(p.y>canvas.height+20)return;
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);
+      ctx.fillStyle=p.color;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+      ctx.restore();
+    });
+    f++;
+    if(f<160)requestAnimationFrame(draw);
+    else{ctx.clearRect(0,0,canvas.width,canvas.height);canvas.style.display='none';}
+  }
+  draw();
+}
+
 // INIT
 drawAvatar(1);renderStats();updateHUD();renderMap();
 </script>
+<canvas id="confetti-canvas" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:9999;display:none"></canvas>
+<div id="area-done" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;text-align:center;pointer-events:none;font-family:'VT323',monospace">
+  <div style="background:#001208;border:3px solid #00ff88;border-radius:6px;padding:22px 36px;box-shadow:0 0 24px #00ff8866">
+    <div style="font-size:30px;color:#00ff88;letter-spacing:2px">✔ ÁREA CONCLUÍDA!</div>
+    <div id="area-done-score" style="font-size:20px;color:#aac;margin-top:8px"></div>
+  </div>
+</div>
 </body>
 </html>

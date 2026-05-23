@@ -949,7 +949,7 @@ async function exportDoc(){
       new Paragraph({children:[new TextRun({text:item.label,size:16,color:'888888',font:'Exo 2'})],alignment:AlignmentType.CENTER,spacing:{before:60}}),
       new Paragraph({children:[new TextRun({text:item.value,bold:true,size:32,color:cyan,font:'Exo 2'})],alignment:AlignmentType.CENTER}),
       new Paragraph({children:[new TextRun({text:item.sub||'',size:14,color:'888888',font:'Exo 2'})],alignment:AlignmentType.CENTER,spacing:{after:60}}),
-    ],shading:{type:ShadingType.SOLID,color:lightBlue},borders:{top:{style:BorderStyle.SINGLE,size:6,color:cyan},bottom:{style:BorderStyle.SINGLE,size:6,color:cyan},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE}}}))})]},margins:{top:60,bottom:60,left:60,right:60}});
+    ],shading:{type:ShadingType.SOLID,color:lightBlue},borders:{top:{style:BorderStyle.SINGLE,size:6,color:cyan},bottom:{style:BorderStyle.SINGLE,size:6,color:cyan},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE}}}))})],margins:{top:60,bottom:60,left:60,right:60}});
 
     const areaRows=[
       new TableRow({children:[['ÁREA','35%'],['SCORE','20%'],['GARGALOS DETECTADOS','45%']].map(([txt,w])=>new TableCell({children:[new Paragraph({children:[new TextRun({text:txt,bold:true,color:white,size:18,font:'Exo 2'})],alignment:AlignmentType.CENTER})],shading:{type:ShadingType.SOLID,color:cyan},width:{size:parseInt(w),type:WidthType.PERCENTAGE}}))}),

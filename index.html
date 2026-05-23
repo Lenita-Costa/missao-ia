@@ -1032,32 +1032,32 @@ async function exportDoc(){
     let m=calcMat();let mlvl=MAT_LEVELS[matLvlIdx(m)];
     let lv=LEVELS[S.level-1];let today=new Date().toLocaleDateString('pt-BR');
     const blue='002060',cyan='0225EB',white='FFFFFF',lightBlue='EEF2FF';
-    const hdr=t=>new Paragraph({children:[new TextRun({text:t,bold:true,color:white,size:28,font:'VT323'})],shading:{type:ShadingType.SOLID,color:blue},spacing:{before:200,after:200},indent:{left:200,right:200}});
-    const sec=t=>new Paragraph({children:[new TextRun({text:t.toUpperCase(),bold:true,color:white,size:22,font:'VT323'})],shading:{type:ShadingType.SOLID,color:cyan},spacing:{before:300,after:160},indent:{left:160,right:160}});
-    const body=(t,opts={})=>new Paragraph({children:[new TextRun({text:t,size:20,font:'VT323',...opts})],spacing:{before:80,after:80},indent:{left:160}});
+    const hdr=t=>new Paragraph({children:[new TextRun({text:t,bold:true,color:white,size:28,font:'Calibri'})],shading:{type:ShadingType.SOLID,color:blue},spacing:{before:200,after:200},indent:{left:200,right:200}});
+    const sec=t=>new Paragraph({children:[new TextRun({text:t.toUpperCase(),bold:true,color:white,size:22,font:'Calibri'})],shading:{type:ShadingType.SOLID,color:cyan},spacing:{before:300,after:160},indent:{left:160,right:160}});
+    const body=(t,opts={})=>new Paragraph({children:[new TextRun({text:t,size:20,font:'Calibri',...opts})],spacing:{before:80,after:80},indent:{left:160}});
     const kpi=items=>new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[new TableRow({children:items.map(item=>new TableCell({children:[
-      new Paragraph({children:[new TextRun({text:item.label,size:16,color:'888888',font:'VT323'})],alignment:AlignmentType.CENTER,spacing:{before:60}}),
-      new Paragraph({children:[new TextRun({text:item.value,bold:true,size:32,color:cyan,font:'VT323'})],alignment:AlignmentType.CENTER}),
-      new Paragraph({children:[new TextRun({text:item.sub||'',size:14,color:'888888',font:'VT323'})],alignment:AlignmentType.CENTER,spacing:{after:60}}),
-    ],shading:{type:ShadingType.SOLID,color:lightBlue},borders:{top:{style:BorderStyle.SINGLE,size:6,color:cyan},bottom:{style:BorderStyle.SINGLE,size:6,color:cyan},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE}}}))})],margins:{top:60,bottom:60,left:60,right:60}});
+      new Paragraph({children:[new TextRun({text:item.label,size:16,color:'888888',font:'Calibri'})],alignment:AlignmentType.CENTER,spacing:{before:60}}),
+      new Paragraph({children:[new TextRun({text:item.value,bold:true,size:32,color:cyan,font:'Calibri'})],alignment:AlignmentType.CENTER}),
+      new Paragraph({children:[new TextRun({text:item.sub||'',size:14,color:'888888',font:'Calibri'})],alignment:AlignmentType.CENTER,spacing:{after:60}}),
+    ],shading:{type:ShadingType.SOLID,color:lightBlue},borders:{top:{style:BorderStyle.SINGLE,size:6,color:cyan},bottom:{style:BorderStyle.SINGLE,size:6,color:cyan},left:{style:BorderStyle.NIL},right:{style:BorderStyle.NIL}}}))})],margins:{top:60,bottom:60,left:60,right:60}});
 
     const areaRows=[
-      new TableRow({children:[['ÁREA','35%'],['SCORE','20%'],['GARGALOS DETECTADOS','45%']].map(([txt,w])=>new TableCell({children:[new Paragraph({children:[new TextRun({text:txt,bold:true,color:white,size:18,font:'VT323'})],alignment:AlignmentType.CENTER})],shading:{type:ShadingType.SOLID,color:cyan},width:{size:parseInt(w),type:WidthType.PERCENTAGE}}))}),
+      new TableRow({children:[['ÁREA','35%'],['SCORE','20%'],['GARGALOS DETECTADOS','45%']].map(([txt,w])=>new TableCell({children:[new Paragraph({children:[new TextRun({text:txt,bold:true,color:white,size:18,font:'Calibri'})],alignment:AlignmentType.CENTER})],shading:{type:ShadingType.SOLID,color:cyan},width:{size:parseInt(w),type:WidthType.PERCENTAGE}}))}),
       ...AREAS.map((a,i)=>{
         let st=S.areas[a.id];let sc=st.visited?st.score:null;let shade=i%2===0?lightBlue:white;
         return new TableRow({children:[
-          new TableCell({children:[new Paragraph({children:[new TextRun({text:a.name,size:18,font:'VT323'})],indent:{left:80}})],shading:{type:ShadingType.SOLID,color:shade}}),
-          new TableCell({children:[new Paragraph({children:[new TextRun({text:sc!==null?sc+'%':'N/A',size:18,bold:true,color:sc!==null?(sc>=65?'006600':sc>=40?'996600':'cc0000'):'888888',font:'VT323'})],alignment:AlignmentType.CENTER})],shading:{type:ShadingType.SOLID,color:shade}}),
-          new TableCell({children:[new Paragraph({children:[new TextRun({text:st.gargalos.slice(0,3).join(' | ')||'—',size:14,font:'VT323',color:st.visited?'333333':'888888'})],indent:{left:80}})],shading:{type:ShadingType.SOLID,color:shade}}),
+          new TableCell({children:[new Paragraph({children:[new TextRun({text:a.name,size:18,font:'Calibri'})],indent:{left:80}})],shading:{type:ShadingType.SOLID,color:shade}}),
+          new TableCell({children:[new Paragraph({children:[new TextRun({text:sc!==null?sc+'%':'N/A',size:18,bold:true,color:sc!==null?(sc>=65?'006600':sc>=40?'996600':'cc0000'):'888888',font:'Calibri'})],alignment:AlignmentType.CENTER})],shading:{type:ShadingType.SOLID,color:shade}}),
+          new TableCell({children:[new Paragraph({children:[new TextRun({text:st.gargalos.slice(0,3).join(' | ')||'—',size:14,font:'Calibri',color:st.visited?'333333':'888888'})],indent:{left:80}})],shading:{type:ShadingType.SOLID,color:shade}}),
         ]});
       }),
     ];
 
     const iaRows=[
-      new TableRow({children:[['ÁREA','30%'],['OPORTUNIDADES DE IA IDENTIFICADAS','70%']].map(([txt,w])=>new TableCell({children:[new Paragraph({children:[new TextRun({text:txt,bold:true,color:white,size:18,font:'VT323'})],alignment:AlignmentType.CENTER})],shading:{type:ShadingType.SOLID,color:cyan},width:{size:parseInt(w),type:WidthType.PERCENTAGE}}))}),
+      new TableRow({children:[['ÁREA','30%'],['OPORTUNIDADES DE IA IDENTIFICADAS','70%']].map(([txt,w])=>new TableCell({children:[new Paragraph({children:[new TextRun({text:txt,bold:true,color:white,size:18,font:'Calibri'})],alignment:AlignmentType.CENTER})],shading:{type:ShadingType.SOLID,color:cyan},width:{size:parseInt(w),type:WidthType.PERCENTAGE}}))}),
       ...visited.filter(a=>S.areas[a.id].iaOps.length).map((a,i)=>new TableRow({children:[
-        new TableCell({children:[new Paragraph({children:[new TextRun({text:a.name,size:18,font:'VT323'})],indent:{left:80}})],shading:{type:ShadingType.SOLID,color:i%2===0?lightBlue:white}}),
-        new TableCell({children:[new Paragraph({children:[new TextRun({text:S.areas[a.id].iaOps.join(' | '),size:14,font:'VT323'})],indent:{left:80}})],shading:{type:ShadingType.SOLID,color:i%2===0?lightBlue:white}}),
+        new TableCell({children:[new Paragraph({children:[new TextRun({text:a.name,size:18,font:'Calibri'})],indent:{left:80}})],shading:{type:ShadingType.SOLID,color:i%2===0?lightBlue:white}}),
+        new TableCell({children:[new Paragraph({children:[new TextRun({text:S.areas[a.id].iaOps.join(' | '),size:14,font:'Calibri'})],indent:{left:80}})],shading:{type:ShadingType.SOLID,color:i%2===0?lightBlue:white}}),
       ]})),
     ];
 
@@ -1095,11 +1095,11 @@ async function exportDoc(){
       sec('5. Roadmap de Transformação Digital'),
       new Paragraph({spacing:{before:120,after:80}}),
       ...phases.flatMap(p=>[
-        new Paragraph({children:[new TextRun({text:(p.done?'✓ ':'○ ')+p.title,bold:true,size:20,color:p.done?'006600':cyan,font:'VT323'})],spacing:{before:160,after:60},indent:{left:160}}),
+        new Paragraph({children:[new TextRun({text:(p.done?'✓ ':'○ ')+p.title,bold:true,size:20,color:p.done?'006600':cyan,font:'Calibri'})],spacing:{before:160,after:60},indent:{left:160}}),
         body(p.desc),
       ]),
       new Paragraph({spacing:{before:400}}),
-      new Paragraph({children:[new TextRun({text:'Fenasbac — Coordenação de TI | Missão IA: Evolução Organizacional | '+today,size:16,color:'888888',font:'VT323'})],alignment:AlignmentType.CENTER,border:{top:{style:BorderStyle.SINGLE,size:4,color:'CCCCCC'}},spacing:{before:200}}),
+      new Paragraph({children:[new TextRun({text:'Fenasbac — Coordenação de TI | Missão IA: Evolução Organizacional | '+today,size:16,color:'888888',font:'Calibri'})],alignment:AlignmentType.CENTER,border:{top:{style:BorderStyle.SINGLE,size:4,color:'CCCCCC'}},spacing:{before:200}}),
     ]}]});
 
     const blob=await Packer.toBlob(doc);

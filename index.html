@@ -63,7 +63,8 @@ canvas#avatar{width:48px;height:48px;border:2px solid #445;background:#1a1a2e;bo
 .answers{display:flex;flex-direction:column;gap:5px;margin-bottom:8px}
 .ans-btn{background:#111128;border:2px solid #223;padding:8px 10px;cursor:pointer;font-size:17px;color:#aac;line-height:1.6;transition:all 0.15s;border-radius:2px;text-align:left;font-family:'VT323',monospace,sans-serif;width:100%}
 .ans-btn:hover:not(:disabled){border-color:#ffdd44;color:#ffdd44;background:#1a1a00}
-.ans-btn.selected{border-color:#02FFFF;color:#02FFFF;background:#001a1a}
+.ans-btn.selected{border-color:#02FFFF;color:#02FFFF;background:#001a1a;position:relative}
+.ans-btn.selected::after{content:'✓';position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#02FFFF;font-size:18px}
 .ans-btn:disabled{opacity:0.4;cursor:not-allowed}
 .ans-btn.red{border-color:#550000;color:#ff8888}
 .ans-btn.red:hover:not(:disabled){border-color:#ff3333;background:#1a0000}
@@ -221,7 +222,10 @@ canvas#avatar{width:48px;height:48px;border:2px solid #445;background:#1a1a2e;bo
   <div class="interview">
     <div class="interview-header">
       <span class="interview-area" id="interview-area"></span>
-      <span class="interview-prog" id="interview-prog"></span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="interview-prog" id="interview-prog"></span>
+        <button class="btn btn-secondary" onclick="backToMap()" style="font-size:14px;padding:3px 10px;margin:0">◀ MAPA</button>
+      </div>
     </div>
     <div class="step-dots" id="step-dots"></div>
     <div class="question-box">
@@ -938,30 +942,51 @@ function renderQuestion(area){
   renderStepDots(area.questions.length,S.qIdx);
   document.getElementById('block-label').textContent='▶ BLOCO: '+q.block;
   document.getElementById('question-text').textContent=q.text;
-  document.getElementById('question-hint').textContent=q.hint;
+  document.getElementById('question-hint').textContent='💡 '+q.hint+' — Selecione uma ou mais opções.';
   document.getElementById('insight-zone').innerHTML='';
   document.getElementById('area-actions').classList.add('hidden');
-  document.getElementById('answers').innerHTML=q.answers.map((ans,i)=>{
-    let extra=ans.score===0?' red':ans.score===3?' green':'';
-    return `<button class="ans-btn${extra}" onclick="selectAnswer(${i})">[${String.fromCharCode(65+i)}] ${ans.txt}</button>`;
-  }).join('');
+  document.getElementById('answers').innerHTML=
+    q.answers.map((ans,i)=>{
+      let extra=ans.score===0?' red':ans.score===3?' green':'';
+      return `<button class="ans-btn${extra}" onclick="toggleAnswer(this,${i})" data-idx="${i}">[${String.fromCharCode(65+i)}] ${ans.txt}</button>`;
+    }).join('')+
+    '<button class="btn btn-primary" id="btn-confirm" style="display:none;margin-top:10px;width:100%" onclick="confirmAnswers()">CONFIRMAR SELEÇÃO ▶</button>';
 }
 
-function selectAnswer(idx){
+function toggleAnswer(el,idx){
+  el.classList.toggle('selected');
+  let sel=document.querySelectorAll('.ans-btn.selected').length;
+  document.getElementById('btn-confirm').style.display=sel>0?'block':'none';
+}
+
+function confirmAnswers(){
   let area=AREAS.find(a=>a.id===S.current);
   let q=area.questions[S.qIdx];
-  let ans=q.answers[idx];
-  document.querySelectorAll('.ans-btn').forEach((b,i)=>{b.disabled=true;if(i===idx)b.classList.add('selected');});
-  Object.entries(ans.impacts).forEach(([k,v])=>{if(S.ind[k]!==undefined)S.ind[k]=clamp(S.ind[k]+v);});
+  let selBtns=[...document.querySelectorAll('.ans-btn.selected')];
+  if(!selBtns.length)return;
+  let selAnswers=selBtns.map(b=>q.answers[parseInt(b.dataset.idx)]);
+
+  document.querySelectorAll('.ans-btn').forEach(b=>b.disabled=true);
+  document.getElementById('btn-confirm').style.display='none';
+
+  let avgScore=Math.round(selAnswers.reduce((s,a)=>s+a.score,0)/selAnswers.length);
+  let allTags=[...new Set(selAnswers.flatMap(a=>a.tags))];
+  let answerText=selAnswers.map(a=>a.txt).join(' + ');
+
+  selAnswers.forEach(ans=>{
+    Object.entries(ans.impacts).forEach(([k,v])=>{if(S.ind[k]!==undefined)S.ind[k]=clamp(S.ind[k]+v);});
+  });
   renderStats();
+
   let aData=S.areas[S.current];
-  aData.answers.push({question:q.text,answer:ans.txt,score:ans.score,tags:ans.tags});
-  ans.tags.forEach(t=>{if(t.startsWith('IA:')){if(!aData.iaOps.includes(t))aData.iaOps.push(t);}else{if(!aData.gargalos.includes(t))aData.gargalos.push(t);}});
-  gainXP(ans.score===0?5:ans.score===1?8:ans.score===2?10:12);
+  aData.answers.push({question:q.text,answer:answerText,score:avgScore,tags:allTags});
+  allTags.forEach(t=>{if(t.startsWith('IA:')){if(!aData.iaOps.includes(t))aData.iaOps.push(t);}else{if(!aData.gargalos.includes(t))aData.gargalos.push(t);}});
+  gainXP(avgScore===0?5:avgScore===1?8:avgScore===2?10:12);
 
   let iz=document.getElementById('insight-zone');
-  let tagHtml=ans.tags.map(t=>`<span class="gtag ${t.startsWith('IA:')?'cyan':ans.score<=1?'red':'yellow'}">${t}</span>`).join('');
-  let insightText=generateInsight(area.name,ans);
+  let tagHtml=allTags.map(t=>`<span class="gtag ${t.startsWith('IA:')?'cyan':avgScore<=1?'red':'yellow'}">${t}</span>`).join('');
+  let bestAns=selAnswers.reduce((b,a)=>a.score>b.score?a:b,selAnswers[0]);
+  let insightText=generateInsight(area.name,{...bestAns,score:avgScore});
   iz.innerHTML=`<div class="insight-box">${insightText}<div class="gargalo-tags">${tagHtml}</div></div>`;
 
   let az=document.getElementById('area-actions');az.classList.remove('hidden');

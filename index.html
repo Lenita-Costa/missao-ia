@@ -130,6 +130,37 @@ canvas#avatar{width:56px;height:56px;border:2px solid #445;background:#1a1a2e;bo
 .name-input:focus{outline:none;border-color:#02FFFF}
 .btn-send{background:#002a00;color:#88ff88;border-color:#005500}
 .btn-send:hover{background:#004400;border-color:#00ff44}
+
+@media(max-width:600px){
+  body{padding:8px}
+  #app{padding:10px;border-radius:8px}
+  .hud{grid-template-columns:auto 1fr;gap:8px}
+  .hud>div:last-child{display:none}
+  .hud-name{font-size:22px}
+  .hud-title{font-size:15px}
+  .xp-label,.xp-val,.area-count{font-size:18px}
+  .level-badge{font-size:15px}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .world-map{grid-template-columns:repeat(3,1fr);gap:4px}
+  .room-name{font-size:18px}
+  .room-icon{font-size:22px}
+  .room-score{font-size:16px}
+  .mat-grid{grid-template-columns:repeat(2,1fr)}
+  .score-ring-wrap{flex-direction:column;align-items:flex-start;gap:10px}
+  .score-big{font-size:48px}
+  .btn-row{flex-direction:column}
+  .btn{width:100%;text-align:center;font-size:22px}
+  .question-text{font-size:18px}
+  .ans-btn{font-size:18px;line-height:1.6}
+  .insight-box{font-size:18px}
+  .block-label,.interview-prog,.interview-area{font-size:16px}
+  .diag-text,.diag-title{font-size:18px}
+  .roadmap-item-title{font-size:18px}
+  .roadmap-item-desc{font-size:16px}
+  .gargalo-area-title,.gtag,.notif,.step-txt{font-size:16px}
+  .result-big-title{font-size:22px}
+  .name-input{font-size:18px}
+}
 </style>
 </head>
 <body>

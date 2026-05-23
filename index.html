@@ -989,11 +989,8 @@ function confirmAnswers(){
   let insightText=generateInsight(area.name,{...bestAns,score:avgScore});
   iz.innerHTML=`<div class="insight-box">${insightText}<div class="gargalo-tags">${tagHtml}</div></div>`;
 
-  let az=document.getElementById('area-actions');az.classList.remove('hidden');
-  let btn=document.getElementById('btn-next');
   let isLast=S.qIdx>=area.questions.length-1;
-  btn.textContent=isLast?'CONCLUIR DIAGNÓSTICO ▶':'PRÓXIMA PERGUNTA ▶';
-  btn.onclick=isLast?()=>finishArea():()=>nextQuestion();
+  setTimeout(()=>{if(isLast)finishArea();else nextQuestion();},1200);
 }
 
 function nextQuestion(){

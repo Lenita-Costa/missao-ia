@@ -1,0 +1,1134 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+#app{font-family:'Press Start 2P',monospace;background:#0a0a1a;min-height:400px;padding:16px;border-radius:12px;color:#e0e0ff;image-rendering:pixelated}
+.hidden{display:none!important}
+.hud{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;background:#111128;border:2px solid #334;padding:10px 12px;border-radius:4px;margin-bottom:12px}
+canvas#avatar{width:56px;height:56px;border:2px solid #445;background:#1a1a2e;border-radius:2px;image-rendering:pixelated}
+.hud-name{font-size:7px;color:#aac;margin-bottom:6px;letter-spacing:1px}
+.hud-title{font-size:6px;color:#02FFFF;margin-bottom:8px}
+.xp-row{display:flex;align-items:center;gap:6px}
+.xp-label{font-size:5px;color:#778;min-width:20px}
+.xp-track{flex:1;height:8px;background:#1a1a2e;border:1px solid #334;border-radius:1px}
+.xp-fill{height:6px;margin:1px;border-radius:1px;transition:width 0.6s}
+.xp-val{font-size:5px;color:#aac;min-width:28px;text-align:right}
+.level-badge{font-size:6px;color:#ffdd44;background:#221a00;border:2px solid #665500;padding:4px 8px;border-radius:2px;margin-bottom:6px;display:block}
+.area-count{font-size:5px;color:#778}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
+.stat{background:#111128;border:1px solid #223;padding:6px 4px;border-radius:2px;text-align:center}
+.stat-icon{font-size:12px;margin-bottom:3px}
+.stat-label{font-size:4px;color:#778;margin-bottom:3px;text-transform:uppercase}
+.stat-bar{height:4px;background:#1a1a2e;border-radius:1px;margin-bottom:2px}
+.stat-fill{height:4px;border-radius:1px;transition:width 0.6s}
+.stat-val{font-size:5px;color:#aac}
+.map-header{font-size:6px;color:#ffdd44;margin-bottom:8px;letter-spacing:1px}
+.world-map{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.room{background:#111128;border:2px solid #223;padding:8px 6px;cursor:pointer;text-align:center;transition:all 0.15s;border-radius:2px;position:relative}
+.room:hover:not(.locked){border-color:#ffdd44;background:#1a1a2e}
+.room.visited{border-color:#0225EB;background:#0a0a2a}
+.room.visited::after{content:'✓';position:absolute;top:2px;right:4px;font-size:6px;color:#02FFFF}
+.room.locked{opacity:0.35;cursor:not-allowed}
+.room-icon{font-size:16px;margin-bottom:4px}
+.room-name{font-size:5px;color:#aac;line-height:1.4}
+.room-score{font-size:4px;color:#02FFFF;margin-top:3px}
+.notif-stack{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.notif{font-size:4px;padding:5px 8px;border-radius:2px;background:#1a0000;border:1px solid #550000;color:#ff8888}
+@keyframes slideIn{from{transform:translateX(10px);opacity:0}to{transform:translateX(0);opacity:1}}
+.notif{animation:slideIn 0.3s ease}
+
+/* INTERVIEW SCREEN */
+.interview{background:#0d0d20;border:2px solid #334;border-radius:4px;padding:14px;margin-bottom:10px}
+.interview-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #223}
+.interview-area{font-size:6px;color:#02FFFF;letter-spacing:1px}
+.interview-prog{font-size:5px;color:#778}
+.block-label{font-size:5px;color:#ffdd44;letter-spacing:1px;margin-bottom:6px;padding:4px 8px;background:#1a1500;border-left:3px solid #ffdd44;display:inline-block}
+.question-box{background:#0a0a18;border:1px solid #223;padding:10px;margin-bottom:10px;border-radius:2px}
+.question-text{font-size:6px;color:#02FFFF;line-height:2;margin-bottom:10px}
+.question-hint{font-size:4px;color:#556;margin-bottom:8px;font-style:italic}
+.answers{display:flex;flex-direction:column;gap:5px;margin-bottom:8px}
+.ans-btn{background:#111128;border:2px solid #223;padding:8px 10px;cursor:pointer;font-size:5px;color:#aac;line-height:1.8;transition:all 0.15s;border-radius:2px;text-align:left;font-family:'Press Start 2P',monospace;width:100%}
+.ans-btn:hover:not(:disabled){border-color:#ffdd44;color:#ffdd44;background:#1a1a00}
+.ans-btn.selected{border-color:#02FFFF;color:#02FFFF;background:#001a1a}
+.ans-btn:disabled{opacity:0.4;cursor:not-allowed}
+.ans-btn.red{border-color:#550000;color:#ff8888}
+.ans-btn.red:hover:not(:disabled){border-color:#ff3333;background:#1a0000}
+.ans-btn.green{border-color:#005500;color:#88ff88}
+.ans-btn.green:hover:not(:disabled){border-color:#00ff44;background:#001a00}
+.insight-box{background:#001a0a;border:2px solid #004400;padding:10px;margin-bottom:8px;font-size:5px;color:#88ff88;line-height:2;border-radius:2px}
+.insight-box::before{content:'▶ GARGALO DETECTADO: ';color:#00ff44}
+.gargalo-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.gtag{font-size:4px;padding:2px 6px;border-radius:1px;font-family:'Press Start 2P',monospace}
+.gtag.red{background:#330000;color:#ff6666;border:1px solid #550000}
+.gtag.yellow{background:#221a00;color:#ffcc44;border:1px solid #554400}
+.gtag.cyan{background:#001a1a;color:#44ffee;border:1px solid #005555}
+.step-dots{display:flex;gap:4px;margin-bottom:10px;align-items:center}
+.sdot{width:8px;height:8px;background:#1a1a2e;border:1px solid #334}
+.sdot.done{background:#0225EB;border-color:#0055ff}
+.sdot.active{background:#ffdd44;border-color:#ffaa00}
+.step-txt{font-size:4px;color:#778;margin-left:6px}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.btn{font-family:'Press Start 2P',monospace;border:2px solid;padding:8px 12px;cursor:pointer;font-size:5px;border-radius:2px;transition:all 0.15s}
+.btn-primary{background:#002060;color:#aaccff;border-color:#0055aa}
+.btn-primary:hover{background:#0225EB;color:#fff;border-color:#02FFFF}
+.btn-secondary{background:#111128;color:#aac;border-color:#334}
+.btn-secondary:hover{background:#1a1a2e;border-color:#556}
+.btn-gold{background:#221a00;color:#ffdd44;border-color:#665500}
+.btn-gold:hover{background:#332200;border-color:#ffdd44}
+.lvlup{background:#0a0a00;border:3px solid #ffdd44;border-radius:4px;padding:16px;text-align:center;margin-bottom:12px;display:none}
+.lvlup-title{font-size:9px;color:#ffdd44;margin-bottom:8px}
+.lvlup-sub{font-size:5px;color:#aaa;line-height:2;white-space:pre-line}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.cursor::after{content:'_';animation:blink 0.8s infinite;color:#02FFFF}
+
+/* RESULT */
+.result-wrap{background:#0d0d20;border:2px solid #334;border-radius:4px;padding:14px;margin-bottom:10px}
+.result-big-title{font-size:8px;color:#ffdd44;text-align:center;margin-bottom:4px;letter-spacing:1px}
+.result-sub{font-size:5px;color:#778;text-align:center;margin-bottom:14px}
+.score-ring-wrap{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:14px}
+.score-ring{text-align:center}
+.score-big{font-size:20px;color:#02FFFF;display:block;margin-bottom:4px}
+.score-label{font-size:4px;color:#778}
+.score-details{flex:1}
+.score-row{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.score-row-label{font-size:4px;color:#aac;min-width:70px}
+.score-row-bar{flex:1;height:3px;background:#1a1a2e;border-radius:1px}
+.score-row-fill{height:3px;border-radius:1px}
+.score-row-val{font-size:4px;color:#02FFFF;min-width:20px;text-align:right}
+.roadmap-title{font-size:6px;color:#ffdd44;margin-bottom:8px;letter-spacing:1px}
+.roadmap-track{position:relative;padding-left:12px;margin-bottom:14px}
+.roadmap-line{position:absolute;left:4px;top:0;bottom:0;width:2px;background:#223}
+.roadmap-item{position:relative;margin-bottom:10px;padding-left:10px}
+.roadmap-dot{position:absolute;left:-9px;top:3px;width:8px;height:8px;border:2px solid #334;background:#0a0a18}
+.roadmap-dot.done{background:#0225EB;border-color:#0055ff}
+.roadmap-dot.next{background:#ffdd44;border-color:#ffaa00}
+.roadmap-item-title{font-size:5px;color:#aac;margin-bottom:3px}
+.roadmap-item-desc{font-size:4px;color:#556;line-height:1.8}
+.roadmap-item-tag{display:inline-block;font-size:3px;padding:2px 5px;border-radius:1px;margin-top:3px}
+.tag-done{background:#003300;color:#00ff44;border:1px solid #005500}
+.tag-next{background:#221a00;color:#ffdd44;border:1px solid #554400}
+.tag-future{background:#1a1a2e;color:#556;border:1px solid #334}
+.diag-box{background:#001a0a;border:2px solid #004400;padding:10px;margin-bottom:10px;border-radius:2px}
+.diag-title{font-size:5px;color:#00ff44;margin-bottom:8px;letter-spacing:1px}
+.diag-text{font-size:4px;color:#88cc88;line-height:2.2}
+.mat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.mat-card{background:#111128;border:2px solid #223;border-radius:2px;padding:8px 6px;text-align:center}
+.mat-card.visited{border-color:#0225EB}
+.mat-card.not-visited{opacity:0.4}
+.mat-card-icon{font-size:14px;margin-bottom:4px}
+.mat-card-name{font-size:4px;color:#aac;margin-bottom:5px}
+.mat-bar-wrap{height:4px;background:#1a1a2e;border-radius:1px;margin-bottom:3px}
+.mat-bar-fill{height:4px;border-radius:1px}
+.mat-score{font-size:4px;color:#02FFFF}
+.mat-level-tag{font-size:3px;color:#ffaa00;margin-top:2px}
+.gargalo-area-box{background:#0a0a18;border:1px solid #223;padding:8px;margin-bottom:8px;border-radius:2px}
+.gargalo-area-title{font-size:5px;color:#ffdd44;margin-bottom:5px}
+.gargalo-list{font-size:4px;color:#aac;line-height:2}
+</style>
+
+<div id="app">
+<div class="lvlup" id="lvlup">
+  <div class="lvlup-title">★ LEVEL UP! ★</div>
+  <div class="lvlup-sub" id="lvlup-sub"></div>
+</div>
+
+<div class="hud">
+  <div><canvas id="avatar" width="28" height="28"></canvas></div>
+  <div>
+    <div class="hud-name">ARQUITETO DE IA</div>
+    <div class="hud-title">Missão IA: Evolução Organizacional</div>
+    <div class="xp-row">
+      <span class="xp-label">XP</span>
+      <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:5%;background:#02FFFF"></div></div>
+      <span class="xp-val" id="xp-val">0/100</span>
+    </div>
+  </div>
+  <div style="text-align:right">
+    <span class="level-badge" id="level-badge">LV 1</span>
+    <div class="area-count" id="area-count">0/13 ÁREAS</div>
+  </div>
+</div>
+
+<div class="stats-row" id="stats-row"></div>
+<div class="notif-stack" id="notif-stack"></div>
+
+<!-- MAP -->
+<div id="screen-map">
+  <div class="map-header">▶ MAPA — FENASBAC</div>
+  <div class="world-map" id="world-map"></div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" id="btn-diag" style="display:none" onclick="showResult()">VER DIAGNÓSTICO FINAL ▶</button>
+  </div>
+</div>
+
+<!-- INTERVIEW -->
+<div id="screen-area" class="hidden">
+  <div class="interview">
+    <div class="interview-header">
+      <span class="interview-area" id="interview-area"></span>
+      <span class="interview-prog" id="interview-prog"></span>
+    </div>
+    <div class="step-dots" id="step-dots"></div>
+    <div class="question-box">
+      <div class="block-label" id="block-label"></div>
+      <div class="question-text" id="question-text"></div>
+      <div class="question-hint" id="question-hint"></div>
+      <div class="answers" id="answers"></div>
+    </div>
+    <div id="insight-zone"></div>
+    <div class="btn-row hidden" id="area-actions">
+      <button class="btn btn-primary" id="btn-next">PRÓXIMA PERGUNTA ▶</button>
+      <button class="btn btn-secondary" onclick="backToMap()">◀ MAPA</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="screen-result" class="hidden">
+  <div class="result-wrap">
+    <div class="result-big-title">◈ DIAGNÓSTICO ORGANIZACIONAL ◈</div>
+    <div class="result-sub" id="result-sub">FENASBAC — MAPA DE GARGALOS E OPORTUNIDADES</div>
+    <div class="score-ring-wrap">
+      <div class="score-ring">
+        <span class="score-big" id="overall-score">--</span>
+        <span class="score-label">MATURIDADE GERAL</span>
+        <div style="font-size:4px;color:#ffdd44;margin-top:4px" id="overall-level"></div>
+      </div>
+      <div class="score-details" id="score-details"></div>
+    </div>
+    <div class="roadmap-title">▶ MATURIDADE POR ÁREA</div>
+    <div class="mat-grid" id="mat-grid"></div>
+    <div class="roadmap-title">▶ GARGALOS MAPEADOS</div>
+    <div id="gargalos-zone"></div>
+    <div class="roadmap-title">▶ ROADMAP DE TRANSFORMAÇÃO</div>
+    <div class="roadmap-track" id="roadmap-track"><div class="roadmap-line"></div></div>
+    <div class="diag-box">
+      <div class="diag-title">▶ DIAGNÓSTICO EXECUTIVO — IA</div>
+      <div class="diag-text cursor" id="diag-text">GERANDO DIAGNÓSTICO...</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="backToMap()">CONTINUAR MAPEAMENTO ▶</button>
+      <button class="btn btn-gold" onclick="exportDoc()" id="btn-export">EXPORTAR RELATÓRIO .DOCX</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
+<script>
+// ── BLOCOS DE PERGUNTAS POR ÁREA ──
+// Cada questão: { block, text, hint, answers: [{txt, tags, score, impacts}] }
+// score 0-3: 0=crítico 1=frágil 2=funcional 3=maduro
+// tags: gargalos detectados
+// impacts: indicadores afetados
+
+const AREAS = [
+{id:'ti', icon:'🧠', name:'TI', sub:'Sala de Crise', locked:false,
+ questions:[
+  {block:'OPERAÇÃO',text:'Como as demandas chegam até a TI hoje?',hint:'Pense nos canais e formatos mais comuns.',
+   answers:[
+    {txt:'WhatsApp, e-mail e verbal — sem padrão definido',tags:['SEM GOVERNANÇA','DEMANDA INFORMAL'],score:0,impacts:{gov:-10,stress:8,risco:6}},
+    {txt:'Temos canal definido, mas pouco respeitado',tags:['CANAL FRÁGIL'],score:1,impacts:{gov:-4,stress:4}},
+    {txt:'Canal único com triagem básica',tags:['ESTRUTURAÇÃO INICIAL'],score:2,impacts:{gov:5,stress:-3}},
+    {txt:'JSM ou similar com SLA e priorização',tags:['GOVERNANÇA ATIVA'],score:3,impacts:{gov:10,esc:6,stress:-6}},
+  ]},
+  {block:'OPERAÇÃO',text:'O que mais consome tempo da equipe de TI hoje?',hint:'Qual atividade mais se repete durante a semana?',
+   answers:[
+    {txt:'Urgências e incidentes que interrompem tudo',tags:['OPERAÇÃO REATIVA','BACKLOG CRÍTICO'],score:0,impacts:{stress:10,vel:-6,gov:-5}},
+    {txt:'Ajustes e correções de publicações e sistemas',tags:['RETRABALHO'],score:1,impacts:{stress:6,vel:-3}},
+    {txt:'Desenvolvimento de novas funcionalidades',tags:['OPERAÇÃO EQUILIBRADA'],score:2,impacts:{vel:4}},
+    {txt:'Projetos estratégicos com planejamento',tags:['MATURIDADE TÉCNICA'],score:3,impacts:{esc:8,intel:5,vel:5}},
+  ]},
+  {block:'COMUNICAÇÃO',text:'O briefing normalmente chega completo quando uma demanda é solicitada?',hint:'Contexto, prazo, responsável, critério de aceite.',
+   answers:[
+    {txt:'Quase nunca — perdemos tempo esclarecendo',tags:['BRIEFING AUSENTE','RETRABALHO'],score:0,impacts:{vel:-8,stress:8,gov:-6}},
+    {txt:'Às vezes incompleto — dependemos de perguntas',tags:['BRIEFING FRÁGIL'],score:1,impacts:{vel:-4,stress:4}},
+    {txt:'Na maioria das vezes suficiente',tags:['PROCESSO EM EVOLUÇÃO'],score:2,impacts:{vel:3}},
+    {txt:'Sempre estruturado com template padrão',tags:['GOVERNANÇA FORTE'],score:3,impacts:{gov:10,vel:8,stress:-8}},
+  ]},
+  {block:'CONHECIMENTO',text:'Quando alguém da equipe sai de férias, o trabalho continua fluindo?',hint:'Pense em dependências de pessoas específicas.',
+   answers:[
+    {txt:'Não — existem tarefas que só essa pessoa sabe fazer',tags:['DEPENDÊNCIA CRÍTICA','RISCO OPERACIONAL'],score:0,impacts:{risco:12,gov:-8,esc:-6}},
+    {txt:'Com dificuldade — precisamos acionar a pessoa',tags:['DEPENDÊNCIA PARCIAL'],score:1,impacts:{risco:6,stress:5}},
+    {txt:'Em geral sim, com algumas exceções',tags:['DOCUMENTAÇÃO PARCIAL'],score:2,impacts:{risco:-3}},
+    {txt:'Sim — processos documentados e cobertura garantida',tags:['MATURIDADE OPERACIONAL'],score:3,impacts:{gov:8,risco:-10,esc:6}},
+  ]},
+  {block:'GARGALOS',text:'O que mais gera sensação de caos operacional em TI?',hint:'O que vocês sabem que precisa melhorar, mas nunca param para resolver?',
+   answers:[
+    {txt:'Excesso de urgências sem priorização clara',tags:['PRIORIZAÇÃO AUSENTE','BACKLOG CAÓTICO'],score:0,impacts:{stress:12,gov:-8,vel:-6}},
+    {txt:'Falta de documentação e padrões técnicos',tags:['DOCUMENTAÇÃO CRÍTICA'],score:0,impacts:{risco:8,intel:-6,esc:-5}},
+    {txt:'Dependência de aprovações lentas de outras áreas',tags:['GARGALO DE APROVAÇÃO'],score:1,impacts:{vel:-6,stress:5}},
+    {txt:'Volume alto, mas gerenciável com os processos atuais',tags:['OPERAÇÃO ESTÁVEL'],score:2,impacts:{stress:-4}},
+  ]},
+  {block:'IA & EVOLUÇÃO',text:'Se a equipe de TI pudesse eliminar uma tarefa repetitiva, qual seria?',hint:'Pense no que mais consome tempo sem gerar valor estratégico.',
+   answers:[
+    {txt:'Responder as mesmas dúvidas e solicitações básicas',tags:['IA: TRIAGEM INTELIGENTE','IA: AGENTE DE ATENDIMENTO'],score:1,impacts:{intel:8,esc:5}},
+    {txt:'Documentar sistemas e processos após cada entrega',tags:['IA: DOCUMENTAÇÃO AUTOMÁTICA','IA: COPILOTO TÉCNICO'],score:1,impacts:{intel:8,gov:5}},
+    {txt:'Montar relatórios de status e backlog manualmente',tags:['IA: RELATÓRIOS AUTOMÁTICOS','IA: DASHBOARD INTELIGENTE'],score:1,impacts:{intel:6,vel:5}},
+    {txt:'Hoje não identificamos tarefas claramente automatizáveis',tags:['BAIXA PRONTIDÃO PARA IA'],score:0,impacts:{intel:-3}},
+  ]},
+]},
+{id:'mkt', icon:'📣', name:'MARKETING', sub:'Campanhas', locked:false,
+ questions:[
+  {block:'OPERAÇÃO',text:'O que mais atrasa uma campanha ou entrega de comunicação?',hint:'Pense no ponto que mais trava o fluxo.',
+   answers:[
+    {txt:'Aprovações demoradas ou ausentes',tags:['GARGALO DE APROVAÇÃO','DEPENDÊNCIA HIERÁRQUICA'],score:0,impacts:{vel:-8,stress:8,gov:-5}},
+    {txt:'Briefing incompleto ou chegando muito tarde',tags:['BRIEFING FRÁGIL','RETRABALHO'],score:0,impacts:{vel:-6,stress:6,gov:-4}},
+    {txt:'Capacidade da equipe frente ao volume',tags:['SOBRECARGA OPERACIONAL'],score:1,impacts:{stress:8,vel:-4}},
+    {txt:'Alinhamento com outras áreas e fornecedores',tags:['COMUNICAÇÃO FRAGMENTADA'],score:1,impacts:{col:-5,vel:-3}},
+  ]},
+  {block:'COMUNICAÇÃO',text:'Como os ativos e materiais de comunicação são organizados hoje?',hint:'Onde ficam as versões finais, logos, templates?',
+   answers:[
+    {txt:'Em drives pessoais e pastas sem padrão',tags:['ATIVOS DESCENTRALIZADOS','RISCO DE VERSÃO ERRADA'],score:0,impacts:{risco:8,gov:-8,intel:-5}},
+    {txt:'Drive compartilhado, mas sem estrutura clara',tags:['ORGANIZAÇÃO FRÁGIL'],score:1,impacts:{risco:4,gov:-3}},
+    {txt:'Drive organizado com nomenclatura definida',tags:['ESTRUTURAÇÃO INICIAL'],score:2,impacts:{gov:5,risco:-3}},
+    {txt:'DAM ou ferramenta dedicada com controle de versão',tags:['GESTÃO PROFISSIONAL DE ATIVOS'],score:3,impacts:{gov:10,intel:6,risco:-8}},
+  ]},
+  {block:'CONHECIMENTO',text:'Quanto retrabalho existe entre o briefing recebido e a entrega final?',hint:'Quantas rodadas de ajuste são comuns?',
+   answers:[
+    {txt:'Muitas rodadas — o briefing raramente está claro',tags:['RETRABALHO ALTO','BRIEFING CRÍTICO'],score:0,impacts:{stress:10,vel:-8,gov:-5}},
+    {txt:'2 a 3 rodadas em média',tags:['RETRABALHO MODERADO'],score:1,impacts:{stress:5,vel:-3}},
+    {txt:'Geralmente 1 rodada pequena de ajuste',tags:['PROCESSO FUNCIONAL'],score:2,impacts:{vel:3}},
+    {txt:'Raras correções — processo bem definido',tags:['MATURIDADE DE PROCESSO'],score:3,impacts:{gov:8,vel:6,stress:-6}},
+  ]},
+  {block:'GARGALOS',text:'O que mais gera urgência em marketing e comunicação?',hint:'O que tipicamente vira prioridade máxima de última hora?',
+   answers:[
+    {txt:'Demandas da diretoria sem planejamento prévio',tags:['URGÊNCIA TOP-DOWN','SEM FREEZE'],score:0,impacts:{stress:10,gov:-8,vel:-5}},
+    {txt:'Eventos e datas que chegam sem antecedência suficiente',tags:['PLANEJAMENTO FRÁGIL'],score:1,impacts:{stress:7,vel:-4}},
+    {txt:'Erros e correções de materiais já publicados',tags:['RETRABALHO PÓS-PUBLICAÇÃO'],score:1,impacts:{risco:6,stress:5}},
+    {txt:'Volume alto, mas gerenciável com o processo atual',tags:['OPERAÇÃO ESTÁVEL'],score:2,impacts:{stress:-3}},
+  ]},
+  {block:'IA & EVOLUÇÃO',text:'O que a equipe gostaria de fazer melhor, mas falta tempo?',hint:'Pense no que fica sempre para depois.',
+   answers:[
+    {txt:'Produzir mais conteúdo com maior variedade e velocidade',tags:['IA: GERAÇÃO DE COPY','IA: CONTEÚDO VISUAL'],score:1,impacts:{intel:8,vel:5}},
+    {txt:'Analisar resultados e ajustar estratégia continuamente',tags:['IA: ANALYTICS DE CAMPANHAS','IA: RELATÓRIOS AUTOMÁTICOS'],score:1,impacts:{intel:8,gov:5}},
+    {txt:'Organizar e recuperar ativos com mais facilidade',tags:['IA: GESTÃO DE ATIVOS','IA: DAM INTELIGENTE'],score:1,impacts:{intel:6,gov:4}},
+    {txt:'Hoje o que temos atende bem',tags:['BAIXA PRONTIDÃO PARA IA'],score:0,impacts:{intel:-3}},
+  ]},
+]},
+{id:'inov', icon:'🚀', name:'INOVAÇÃO', sub:'Lab Estratégico', locked:false,
+ questions:[
+  {block:'OPERAÇÃO',text:'Como as ideias e iniciativas do programa são registradas?',hint:'O que acontece quando surge uma ideia relevante?',
+   answers:[
+    {txt:'Em e-mails, cadernos e memória das pessoas',tags:['CONHECIMENTO INFORMAL','RISCO DE PERDA'],score:0,impacts:{intel:-8,risco:6,gov:-5}},
+    {txt:'Em planilhas ou documentos sem padrão claro',tags:['ORGANIZAÇÃO FRÁGIL'],score:1,impacts:{intel:-3,gov:-2}},
+    {txt:'Em ferramenta dedicada com estrutura básica',tags:['ESTRUTURAÇÃO INICIAL'],score:2,impacts:{intel:5,gov:4}},
+    {txt:'Processo estruturado com rastreamento e histórico',tags:['GESTÃO DE CONHECIMENTO ATIVA'],score:3,impacts:{intel:12,gov:8,esc:6}},
+  ]},
+  {block:'COMUNICAÇÃO',text:'O que dificulta transformar ideias em execução concreta?',hint:'Onde as iniciativas costumam travar após a concepção?',
+   answers:[
+    {txt:'Falta de processo claro de aprovação e priorização',tags:['PROCESSO AUSENTE','PRIORIZAÇÃO FRÁGIL'],score:0,impacts:{gov:-8,vel:-6,stress:5}},
+    {txt:'Dificuldade de engajar as áreas responsáveis pela execução',tags:['COLABORAÇÃO FRÁGIL'],score:1,impacts:{col:-6,vel:-3}},
+    {txt:'Recursos e capacidade limitados',tags:['CAPACIDADE RESTRITA'],score:1,impacts:{esc:-4,stress:4}},
+    {txt:'Em geral conseguimos evoluir as iniciativas',tags:['EXECUÇÃO FUNCIONAL'],score:2,impacts:{vel:3,col:3}},
+  ]},
+  {block:'CONHECIMENTO',text:'Quanto conhecimento fica disperso após reuniões e eventos do programa?',hint:'O que acontece com os insights, aprendizados e decisões geradas?',
+   answers:[
+    {txt:'A maioria se perde — não há registro sistemático',tags:['CONHECIMENTO PERDIDO','RETRABALHO FUTURO'],score:0,impacts:{intel:-10,risco:6,gov:-5}},
+    {txt:'Registramos parcialmente, mas sem organização',tags:['REGISTRO FRAGMENTADO'],score:1,impacts:{intel:-4,gov:-2}},
+    {txt:'Registramos a maioria em repositório comum',tags:['DOCUMENTAÇÃO PARCIAL'],score:2,impacts:{intel:5}},
+    {txt:'Processo de captura e organização sistemático',tags:['GESTÃO DE CONHECIMENTO MADURA'],score:3,impacts:{intel:12,esc:6,gov:6}},
+  ]},
+  {block:'GARGALOS',text:'O que mais dificulta acompanhar múltiplos programas simultaneamente?',hint:'Onde você sente falta de visibilidade ou controle?',
+   answers:[
+    {txt:'Informações espalhadas em várias ferramentas',tags:['FRAGMENTAÇÃO DE DADOS','VISIBILIDADE BAIXA'],score:0,impacts:{gov:-8,intel:-5,stress:6}},
+    {txt:'Dependência de pessoas específicas para consolidar',tags:['DEPENDÊNCIA OPERACIONAL'],score:0,impacts:{risco:6,stress:5,esc:-4}},
+    {txt:'Volume de informação maior que a capacidade de processar',tags:['SOBRECARGA INFORMACIONAL'],score:1,impacts:{stress:6,intel:-3}},
+    {txt:'Conseguimos acompanhar razoavelmente',tags:['CONTROLE FUNCIONAL'],score:2,impacts:{stress:-2}},
+  ]},
+  {block:'IA & EVOLUÇÃO',text:'Qual atividade exigiria menos esforço se as informações já viessem organizadas?',hint:'Pense no que você faz que depende muito de consolidar dados antes.',
+   answers:[
+    {txt:'Produzir relatórios e apresentações para a diretoria',tags:['IA: RELATÓRIOS ESTRATÉGICOS','IA: SUMARIZAÇÃO AUTOMÁTICA'],score:1,impacts:{intel:8,vel:6}},
+    {txt:'Acompanhar e comparar iniciativas entre programas',tags:['IA: PAINEL DE INOVAÇÃO','IA: COPILOTO ESTRATÉGICO'],score:1,impacts:{intel:8,gov:5}},
+    {txt:'Encontrar pesquisas e referências relevantes',tags:['IA: PESQUISA INTELIGENTE','IA: BASE RAG'],score:1,impacts:{intel:8,vel:5}},
+    {txt:'Hoje o processo está bem encaminhado',tags:['BAIXA PRONTIDÃO PARA IA'],score:0,impacts:{intel:-2}},
+  ]},
+]},
+{id:'gep', icon:'📚', name:'GEP', sub:'Conhecimento', locked:true,
+ questions:[
+  {block:'OPERAÇÃO',text:'Quanto tempo é gasto consolidando materiais e referências antes de começar um projeto?',hint:'Pense na preparação antes de iniciar uma consultoria ou estudo.',
+   answers:[
+    {txt:'Muito tempo — normalmente recomeçamos do zero',tags:['RETRABALHO CRÍTICO','CONHECIMENTO NÃO REUTILIZADO'],score:0,impacts:{vel:-8,intel:-6,stress:7}},
+    {txt:'Alguns dias para reunir o que existe',tags:['BUSCA MANUAL FREQUENTE'],score:1,impacts:{vel:-4,stress:4}},
+    {txt:'Temos repositório, mas nem sempre está completo',tags:['REPOSITÓRIO PARCIAL'],score:2,impacts:{vel:-2,intel:3}},
+    {txt:'Repositório estruturado e fácil de acessar',tags:['BASE DE CONHECIMENTO ATIVA'],score:3,impacts:{intel:10,vel:6,gov:5}},
+  ]},
+  {block:'CONHECIMENTO',text:'É fácil localizar estudos, relatórios e históricos de projetos anteriores?',hint:'O que acontece quando você precisa de um documento de 6 meses atrás?',
+   answers:[
+    {txt:'Difícil — muitas vezes não encontramos ou refazemos',tags:['BUSCA CRÍTICA','MEMÓRIA INFORMAL'],score:0,impacts:{intel:-10,vel:-6,risco:6}},
+    {txt:'Possível, mas demanda tempo e esforço',tags:['BUSCA MANUAL INEFICIENTE'],score:1,impacts:{intel:-4,vel:-3}},
+    {txt:'Razoável — encontramos na maioria das vezes',tags:['ORGANIZAÇÃO FUNCIONAL'],score:2,impacts:{intel:4}},
+    {txt:'Fácil — indexado e buscável rapidamente',tags:['GESTÃO DOCUMENTAL MADURA'],score:3,impacts:{intel:12,vel:8,gov:6}},
+  ]},
+  {block:'COMUNICAÇÃO',text:'Existe repetição na produção de conhecimento — o mesmo conteúdo sendo criado mais de uma vez?',hint:'Relatórios semelhantes, pesquisas redundantes.',
+   answers:[
+    {txt:'Sim, com frequência — cada projeto começa do zero',tags:['RETRABALHO SISTÊMICO','CONHECIMENTO ISOLADO'],score:0,impacts:{intel:-8,vel:-5,stress:6}},
+    {txt:'Às vezes — percebemos depois que já existia algo parecido',tags:['REUTILIZAÇÃO BAIXA'],score:1,impacts:{intel:-3,vel:-2}},
+    {txt:'Raramente — consultamos antes de começar',tags:['REUTILIZAÇÃO PARCIAL'],score:2,impacts:{intel:4,vel:3}},
+    {txt:'Não — temos processo de verificação de existência',tags:['REUSO SISTEMÁTICO'],score:3,impacts:{intel:10,vel:6,gov:5}},
+  ]},
+  {block:'GARGALOS',text:'O que mais dificulta transformar conhecimento produzido em ação ou impacto real?',hint:'O que acontece com os estudos e relatórios após a entrega?',
+   answers:[
+    {txt:'O conhecimento fica guardado e não é ativado',tags:['CONHECIMENTO INATIVO','BAIXO IMPACTO'],score:0,impacts:{intel:-8,col:-5,esc:-4}},
+    {txt:'Dificuldade de comunicar e distribuir para quem precisa',tags:['DISTRIBUIÇÃO FRÁGIL'],score:1,impacts:{col:-4,intel:-3}},
+    {txt:'Falta de mecanismo de busca e recuperação',tags:['ACESSO LIMITADO'],score:1,impacts:{intel:-4,vel:-3}},
+    {txt:'Em geral o conhecimento é bem aproveitado',tags:['ATIVAÇÃO FUNCIONAL'],score:2,impacts:{intel:4,col:3}},
+  ]},
+  {block:'IA & EVOLUÇÃO',text:'O que ajudaria a equipe a produzir e entregar mais com o mesmo esforço?',hint:'Pense nas tarefas mais mecânicas e repetitivas.',
+   answers:[
+    {txt:'Buscar referências e consolidar materiais existentes',tags:['IA: BASE RAG','IA: BUSCA SEMÂNTICA'],score:1,impacts:{intel:10,vel:6}},
+    {txt:'Redigir relatórios e sínteses a partir de dados coletados',tags:['IA: SUMARIZAÇÃO','IA: REDAÇÃO ASSISTIDA'],score:1,impacts:{intel:8,vel:5}},
+    {txt:'Identificar padrões e insights em grandes volumes de dados',tags:['IA: ANÁLISE DE DADOS','IA: INSIGHTS AUTOMÁTICOS'],score:1,impacts:{intel:10,gov:5}},
+    {txt:'Hoje o processo está adequado',tags:['BAIXA PRONTIDÃO PARA IA'],score:0,impacts:{intel:-2}},
+  ]},
+]},
+{id:'eventos', icon:'🎟️', name:'EVENTOS', sub:'Go Live', locked:false,
+ questions:[
+  {block:'OPERAÇÃO',text:'O que mais gera crise antes de um evento?',hint:'O que normalmente aparece de surpresa no dia anterior ou no próprio dia?',
+   answers:[
+    {txt:'Pendências de fornecedores que não confirmaram',tags:['DEPENDÊNCIA EXTERNA CRÍTICA','FORNECEDOR SEM CONTRATO'],score:0,impacts:{risco:10,gov:-6,stress:8}},
+    {txt:'Informações incompletas ou conflitantes entre áreas',tags:['COMUNICAÇÃO FRAGMENTADA','DADOS CONFLITANTES'],score:0,impacts:{col:-6,stress:8,gov:-4}},
+    {txt:'Tarefas operacionais que ficaram para última hora',tags:['PLANEJAMENTO FRÁGIL'],score:1,impacts:{stress:6,vel:-4}},
+    {txt:'Em geral os eventos rodam bem operacionalmente',tags:['OPERAÇÃO MADURA'],score:2,impacts:{stress:-4,gov:3}},
+  ]},
+  {block:'COMUNICAÇÃO',text:'Como as entregas e fornecedores são acompanhados durante a operação de um evento?',hint:'Existe visibilidade em tempo real do que está pendente?',
+   answers:[
+    {txt:'Por WhatsApp e memória da equipe',tags:['CONTROLE INFORMAL','SEM RASTREABILIDADE'],score:0,impacts:{gov:-8,risco:8,intel:-4}},
+    {txt:'Planilha compartilhada atualizada manualmente',tags:['CONTROLE FRÁGIL'],score:1,impacts:{gov:-3,stress:4}},
+    {txt:'Ferramenta de gestão com checklist básico',tags:['ESTRUTURAÇÃO INICIAL'],score:2,impacts:{gov:5,stress:-3}},
+    {txt:'Sistema integrado com alertas e status em tempo real',tags:['GESTÃO OPERACIONAL MADURA'],score:3,impacts:{gov:10,risco:-8,vel:6}},
+  ]},
+  {block:'CONHECIMENTO',text:'Após um evento, o que acontece com os aprendizados, erros e boas práticas?',hint:'Existe retrospectiva ou registro sistemático?',
+   answers:[
+    {txt:'Ficam na memória das pessoas — sem registro',tags:['MEMÓRIA INFORMAL','ERRO REPETIDO'],score:0,impacts:{intel:-8,risco:5,gov:-4}},
+    {txt:'Algumas anotações esparsas sem padrão',tags:['REGISTRO FRAGMENTADO'],score:1,impacts:{intel:-3,gov:-2}},
+    {txt:'Relatório básico pós-evento na maioria das vezes',tags:['DOCUMENTAÇÃO PARCIAL'],score:2,impacts:{intel:4,gov:3}},
+    {txt:'Processo de retrospectiva estruturado e arquivado',tags:['APRENDIZADO INSTITUCIONALIZADO'],score:3,impacts:{intel:10,gov:8,esc:5}},
+  ]},
+  {block:'GARGALOS',text:'O que costuma ser feito manualmente e poderia ser automatizado?',hint:'Tarefas repetitivas em cada ciclo de evento.',
+   answers:[
+    {txt:'Comunicação com participantes e confirmações',tags:['AUTOMAÇÃO: COMUNICAÇÃO','IA: CONFIRMAÇÃO AUTOMÁTICA'],score:0,impacts:{vel:-5,stress:6}},
+    {txt:'Consolidação de listas, dados e relatórios',tags:['AUTOMAÇÃO: CONSOLIDAÇÃO','IA: RELATÓRIOS AUTOMÁTICOS'],score:0,impacts:{vel:-4,stress:5}},
+    {txt:'Acompanhamento de fornecedores e pendências',tags:['AUTOMAÇÃO: MONITORAMENTO','IA: ALERTA DE RISCO'],score:0,impacts:{risco:5,stress:5}},
+    {txt:'Em geral conseguimos executar com eficiência',tags:['OPERAÇÃO EFICIENTE'],score:2,impacts:{stress:-3}},
+  ]},
+  {block:'IA & EVOLUÇÃO',text:'Onde vocês sentem mais falta de previsibilidade operacional?',hint:'O que mais costuma surpreender negativamente?',
+   answers:[
+    {txt:'Não sabemos com antecedência onde os riscos estão',tags:['IA: MONITOR DE RISCOS','IA: PREVISÃO OPERACIONAL'],score:0,impacts:{risco:8,intel:-4}},
+    {txt:'Falta visibilidade do status de todas as dependências',tags:['IA: DASHBOARD OPERACIONAL','IA: CHECKLIST INTELIGENTE'],score:1,impacts:{gov:-5,intel:4}},
+    {txt:'Dificuldade de replicar o que funcionou em eventos anteriores',tags:['IA: BASE DE BOAS PRÁTICAS','IA: COPILOTO OPERACIONAL'],score:1,impacts:{intel:5,esc:4}},
+    {txt:'Em geral temos boa previsibilidade',tags:['MATURIDADE OPERACIONAL'],score:2,impacts:{gov:3}},
+  ]},
+]},
+{id:'dir', icon:'👔', name:'DIRETORIA', sub:'Executivo', locked:true,
+ questions:[
+  {block:'OPERAÇÃO',text:'Hoje existe visibilidade clara do status dos projetos estratégicos?',hint:'É fácil saber o que está em andamento, atrasado ou em risco?',
+   answers:[
+    {txt:'Não — dependemos de reuniões para saber o status',tags:['VISIBILIDADE CRÍTICA','DEPENDÊNCIA DE REUNIÃO'],score:0,impacts:{gov:-10,intel:-6,stress:5}},
+    {txt:'Parcialmente — cada área reporta de forma diferente',tags:['RELATÓRIOS FRAGMENTADOS'],score:1,impacts:{gov:-5,intel:-3}},
+    {txt:'Razoável — temos reuniões periódicas de alinhamento',tags:['VISIBILIDADE BÁSICA'],score:2,impacts:{gov:3}},
+    {txt:'Sim — dashboard integrado com status em tempo real',tags:['GOVERNANÇA EXECUTIVA MADURA'],score:3,impacts:{gov:12,intel:10,esc:6}},
+  ]},
+  {block:'COMUNICAÇÃO',text:'O que dificulta a tomada de decisão rápida pela diretoria?',hint:'O que costuma atrasar ou complicar decisões estratégicas?',
+   answers:[
+    {txt:'Falta de dados consolidados no momento certo',tags:['DECISÃO SEM DADOS','INTELIGÊNCIA FRAGMENTADA'],score:0,impacts:{gov:-8,intel:-8,vel:-5}},
+    {txt:'Excesso de informação operacional sem síntese',tags:['SOBRECARGA INFORMACIONAL'],score:1,impacts:{intel:-4,stress:4}},
+    {txt:'Dependência de relatórios preparados manualmente',tags:['RELATÓRIO MANUAL','GARGALO DE PREPARAÇÃO'],score:1,impacts:{vel:-4,gov:-3}},
+    {txt:'Em geral temos o que precisamos para decidir',tags:['SUPORTE DECISÓRIO FUNCIONAL'],score:2,impacts:{gov:3,intel:3}},
+  ]},
+  {block:'CONHECIMENTO',text:'Como as decisões estratégicas e seus contextos são registrados?',hint:'É possível recuperar o raciocínio por trás de uma decisão tomada há 6 meses?',
+   answers:[
+    {txt:'Não são registradas formalmente — ficam na memória',tags:['DECISÃO SEM TRILHA','RISCO INSTITUCIONAL'],score:0,impacts:{gov:-10,risco:8,intel:-6}},
+    {txt:'Parcialmente — algumas atas e e-mails',tags:['REGISTRO FRAGMENTADO'],score:1,impacts:{gov:-4,risco:4}},
+    {txt:'Atas de reunião na maioria das vezes',tags:['DOCUMENTAÇÃO BÁSICA'],score:2,impacts:{gov:4,risco:-3}},
+    {txt:'Repositório estruturado de decisões e contexto',tags:['GOVERNANÇA DOCUMENTAL MADURA'],score:3,impacts:{gov:12,risco:-10,intel:8}},
+  ]},
+  {block:'GARGALOS',text:'Quais indicadores são mais difíceis de acompanhar hoje?',hint:'Onde existe falta de previsibilidade ou dados confiáveis?',
+   answers:[
+    {txt:'Impacto e resultados dos projetos em andamento',tags:['RESULTADO INVISÍVEL','KPI AUSENTE'],score:0,impacts:{gov:-8,intel:-6,esc:-4}},
+    {txt:'Situação financeira consolidada dos projetos',tags:['FINANCEIRO OPACO'],score:0,impacts:{gov:-6,risco:6,intel:-4}},
+    {txt:'Capacidade e sobrecarga das equipes',tags:['CAPACIDADE INVISÍVEL'],score:1,impacts:{gov:-4,stress:4}},
+    {txt:'Em geral temos visibilidade suficiente',tags:['MONITORAMENTO FUNCIONAL'],score:2,impacts:{gov:3}},
+  ]},
+  {block:'IA & EVOLUÇÃO',text:'O que ajudaria a diretoria a tomar decisões mais rápidas e embasadas?',hint:'Pense no que falta para que as decisões sejam mais ágeis.',
+   answers:[
+    {txt:'Síntese automática dos projetos e indicadores',tags:['IA: DASHBOARD EXECUTIVO','IA: COPILOTO ESTRATÉGICO'],score:1,impacts:{intel:10,gov:6}},
+    {txt:'Alertas proativos sobre riscos e desvios',tags:['IA: MONITOR DE RISCOS','IA: VISÃO PREDITIVA'],score:1,impacts:{intel:8,risco:-5}},
+    {txt:'Relatórios executivos gerados automaticamente',tags:['IA: RELATÓRIOS AUTOMÁTICOS','IA: INTELIGÊNCIA EXECUTIVA'],score:1,impacts:{intel:8,vel:5}},
+    {txt:'O suporte atual é suficiente',tags:['BAIXA PRONTIDÃO PARA IA'],score:0,impacts:{intel:-2}},
+  ]},
+]},
+{id:'fin', icon:'💰', name:'FINANCEIRO', sub:'Controle', locked:true,
+ questions:[
+  {block:'OPERAÇÃO',text:'Quais processos financeiros ainda dependem muito de planilhas manuais?',hint:'Pense nos controles mais críticos do dia a dia.',
+   answers:[
+    {txt:'Quase todos — planilhas são nossa principal ferramenta',tags:['DEPENDÊNCIA CRÍTICA DE PLANILHAS','RISCO DE DADO CONFLITANTE'],score:0,impacts:{gov:-10,risco:10,intel:-6}},
+    {txt:'Processos secundários — os principais já estão em sistema',tags:['TRANSIÇÃO PARCIAL'],score:1,impacts:{gov:-3,risco:4}},
+    {txt:'Apenas relatórios e análises complementares',tags:['USO FUNCIONAL DE PLANILHAS'],score:2,impacts:{gov:3}},
+    {txt:'Mínimo — sistemas integrados cobrem a maioria',tags:['MATURIDADE FINANCEIRA'],score:3,impacts:{gov:10,risco:-8,intel:5}},
+  ]},
+  {block:'COMUNICAÇÃO',text:'Onde existem aprovações financeiras que costumam demorar?',hint:'O que mais trava pagamentos, orçamentos ou prestações?',
+   answers:[
+    {txt:'Aprovações que dependem de uma única pessoa',tags:['GARGALO DE APROVAÇÃO','DEPENDÊNCIA HIERÁRQUICA'],score:0,impacts:{vel:-8,stress:8,risco:5}},
+    {txt:'Falta de informação completa para aprovar',tags:['INFORMAÇÃO INCOMPLETA'],score:1,impacts:{vel:-5,stress:5}},
+    {txt:'Fluxo bem definido, mas com etapas manuais',tags:['PROCESSO FUNCIONAL MAS MANUAL'],score:2,impacts:{vel:-2,gov:3}},
+    {txt:'Fluxo digital com aprovação rápida',tags:['APROVAÇÃO ÁGIL'],score:3,impacts:{vel:6,gov:8,stress:-6}},
+  ]},
+  {block:'CONHECIMENTO',text:'Como a rastreabilidade financeira é garantida hoje?',hint:'É fácil auditar uma transação ou aprovação de 3 meses atrás?',
+   answers:[
+    {txt:'Difícil — as trilhas ficam em e-mails e conversas',tags:['RASTREABILIDADE CRÍTICA','RISCO DE AUDITORIA'],score:0,impacts:{gov:-10,risco:10,intel:-6}},
+    {txt:'Parcialmente — alguns registros em sistema, outros não',tags:['RASTREABILIDADE PARCIAL'],score:1,impacts:{gov:-4,risco:5}},
+    {txt:'Razoável — temos registros na maioria dos casos',tags:['DOCUMENTAÇÃO FUNCIONAL'],score:2,impacts:{gov:4,risco:-3}},
+    {txt:'Completa — log automático de todas as operações',tags:['RASTREABILIDADE TOTAL'],score:3,impacts:{gov:10,risco:-10,intel:5}},
+  ]},
+  {block:'GARGALOS',text:'O que mais gera retrabalho na área financeira?',hint:'O que precisa ser refeito com mais frequência?',
+   answers:[
+    {txt:'Reconciliar dados de diferentes fontes e planilhas',tags:['RECONCILIAÇÃO MANUAL','DADOS FRAGMENTADOS'],score:0,impacts:{vel:-6,stress:8,intel:-5}},
+    {txt:'Corrigir informações enviadas incompletas por outras áreas',tags:['DEPENDÊNCIA DE QUALIDADE EXTERNA'],score:0,impacts:{col:-5,stress:6,vel:-4}},
+    {txt:'Refazer relatórios quando os dados mudam',tags:['RELATÓRIO REATIVO'],score:1,impacts:{vel:-4,stress:4}},
+    {txt:'Baixo retrabalho — processo bem rodado',tags:['EFICIÊNCIA OPERACIONAL'],score:2,impacts:{stress:-3,vel:3}},
+  ]},
+  {block:'IA & EVOLUÇÃO',text:'Qual tarefa financeira se beneficiaria mais de automação?',hint:'Pense no que mais consome horas sem agregar análise.',
+   answers:[
+    {txt:'Conciliação e cruzamento de dados entre sistemas',tags:['IA: CONCILIAÇÃO AUTOMÁTICA','IA: INTEGRAÇÃO DE DADOS'],score:1,impacts:{intel:8,vel:6}},
+    {txt:'Geração de relatórios e prestações de contas',tags:['IA: RELATÓRIOS FINANCEIROS','IA: PRESTAÇÃO AUTOMÁTICA'],score:1,impacts:{intel:8,vel:5}},
+    {txt:'Alertas sobre desvios orçamentários em tempo real',tags:['IA: MONITOR FINANCEIRO','IA: ALERTAS AUTOMÁTICOS'],score:1,impacts:{intel:8,gov:5}},
+    {txt:'O processo atual não demanda automação',tags:['BAIXA PRONTIDÃO PARA IA'],score:0,impacts:{intel:-2}},
+  ]},
+]},
+{id:'audit', icon:'🔍', name:'AUDITORIA', sub:'Conformidade', locked:true,
+ questions:[
+  {block:'OPERAÇÃO',text:'Quanto tempo é gasto validando evidências durante uma auditoria?',hint:'Pense na coleta e organização de documentos comprobatórios.',
+   answers:[
+    {txt:'A maioria do tempo — a busca é longa e manual',tags:['EVIDÊNCIA DESCENTRALIZADA','AUDITORIA CRÍTICA'],score:0,impacts:{vel:-8,stress:10,risco:6}},
+    {txt:'Tempo considerável, mas conseguimos organizar',tags:['PROCESSO CUSTOSO'],score:1,impacts:{vel:-4,stress:5}},
+    {txt:'Razoável — temos repositório básico de evidências',tags:['ESTRUTURAÇÃO INICIAL'],score:2,impacts:{vel:3,stress:-2}},
+    {txt:'Rápido — evidências centralizadas e indexadas',tags:['MATURIDADE DE CONFORMIDADE'],score:3,impacts:{vel:6,gov:8,risco:-6}},
+  ]},
+  {block:'CONHECIMENTO',text:'As informações e controles estão centralizados ou dispersos?',hint:'Onde vivem os documentos de conformidade e rastreabilidade?',
+   answers:[
+    {txt:'Muito dispersos — drives pessoais, e-mails, WhatsApp',tags:['INFORMAÇÃO DESCENTRALIZADA CRÍTICA','RISCO REGULATÓRIO'],score:0,impacts:{gov:-10,risco:10,intel:-6}},
+    {txt:'Parcialmente centralizados com gaps',tags:['CENTRALIZAÇÃO PARCIAL'],score:1,impacts:{gov:-4,risco:5}},
+    {txt:'Repositório compartilhado na maioria dos casos',tags:['ORGANIZAÇÃO FUNCIONAL'],score:2,impacts:{gov:5,risco:-3}},
+    {txt:'Sistema centralizado com acesso controlado',tags:['GOVERNANÇA DOCUMENTAL'],score:3,impacts:{gov:10,risco:-8,intel:5}},
+  ]},
+  {block:'COMUNICAÇÃO',text:'Como os controles e processos sujeitos a auditoria são acompanhados?',hint:'Existe monitoramento contínuo ou só no momento da auditoria?',
+   answers:[
+    {txt:'Só auditamos quando há demanda externa',tags:['AUDITORIA REATIVA','RISCO ACUMULADO'],score:0,impacts:{gov:-8,risco:10,esc:-4}},
+    {txt:'Verificações periódicas manuais',tags:['MONITORAMENTO MANUAL'],score:1,impacts:{gov:-3,risco:4}},
+    {txt:'Monitoramento regular com checklist',tags:['PROCESSO FUNCIONAL'],score:2,impacts:{gov:5,risco:-4}},
+    {txt:'Monitoramento contínuo e automatizado',tags:['CONFORMIDADE PROATIVA'],score:3,impacts:{gov:12,risco:-10,esc:6}},
+  ]},
+  {block:'GARGALOS',text:'O que mais dificulta as auditorias internas?',hint:'Qual é o maior obstáculo operacional.',
+   answers:[
+    {txt:'Dificuldade de rastrear quem fez o quê e quando',tags:['RASTREABILIDADE AUSENTE','LOG INCOMPLETO'],score:0,impacts:{gov:-10,risco:8,intel:-5}},
+    {txt:'Informações em formatos e locais diferentes',tags:['FRAGMENTAÇÃO DOCUMENTAL'],score:0,impacts:{gov:-6,risco:6,vel:-4}},
+    {txt:'Falta de processo formal para coleta de evidências',tags:['PROCESSO INFORMAL'],score:1,impacts:{gov:-5,risco:4}},
+    {txt:'Em geral as auditorias correm bem',tags:['MATURIDADE DE AUDITORIA'],score:2,impacts:{gov:3,risco:-3}},
+  ]},
+  {block:'IA & EVOLUÇÃO',text:'O que tornaria o processo de auditoria significativamente mais eficiente?',hint:'Pense no que mais consome esforço manual.',
+   answers:[
+    {txt:'Busca e indexação automática de evidências',tags:['IA: AUDITORIA DOCUMENTAL','IA: BUSCA INTELIGENTE'],score:1,impacts:{intel:8,vel:6}},
+    {txt:'Monitoramento contínuo de inconsistências',tags:['IA: MONITOR DE CONFORMIDADE','IA: ALERTAS AUTOMÁTICOS'],score:1,impacts:{intel:8,gov:5}},
+    {txt:'Rastreamento automático de acessos e alterações',tags:['IA: LOG INTELIGENTE','IA: TRILHA AUTOMÁTICA'],score:1,impacts:{intel:8,risco:-6}},
+    {txt:'O processo atual é suficiente',tags:['BAIXA PRONTIDÃO PARA IA'],score:0,impacts:{intel:-2}},
+  ]},
+]},
+{id:'parc', icon:'🤝', name:'PARCERIAS', sub:'Relacionamentos', locked:true,
+ questions:[
+  {block:'OPERAÇÃO',text:'Como o histórico de parceiros e interações é acompanhado hoje?',hint:'Onde ficam os registros de reuniões, compromissos e conversas estratégicas?',
+   answers:[
+    {txt:'Na memória das pessoas e e-mails pessoais',tags:['MEMÓRIA INFORMAL','RISCO DE PERDA DE RELACIONAMENTO'],score:0,impacts:{intel:-10,risco:8,gov:-6}},
+    {txt:'Anotações em planilhas sem padrão',tags:['REGISTRO FRAGMENTADO'],score:1,impacts:{intel:-4,gov:-3}},
+    {txt:'CRM básico ou planilha organizada',tags:['ESTRUTURAÇÃO INICIAL'],score:2,impacts:{intel:5,gov:4}},
+    {txt:'CRM estruturado com histórico completo',tags:['GESTÃO DE RELACIONAMENTO MADURA'],score:3,impacts:{intel:12,gov:8,esc:6}},
+  ]},
+  {block:'COMUNICAÇÃO',text:'Existe dificuldade em ter visão consolidada de todos os parceiros e seus status?',hint:'Quantos parceiros existem e quão fácil é saber o status de cada um?',
+   answers:[
+    {txt:'Sim — cada pessoa tem seu próprio controle',tags:['VISIBILIDADE FRAGMENTADA','DEPENDÊNCIA DE PESSOA'],score:0,impacts:{gov:-8,intel:-6,risco:5}},
+    {txt:'Parcialmente — temos visão de alguns, não todos',tags:['CONTROLE PARCIAL'],score:1,impacts:{gov:-3,intel:-2}},
+    {txt:'Em geral conseguimos consolidar com esforço',tags:['CONSOLIDAÇÃO MANUAL'],score:2,impacts:{vel:-2,intel:3}},
+    {txt:'Visão consolidada disponível facilmente',tags:['GESTÃO INTEGRADA'],score:3,impacts:{intel:10,gov:6,vel:4}},
+  ]},
+  {block:'CONHECIMENTO',text:'O que acontece quando a pessoa responsável por um parceiro estratégico sai da organização?',hint:'O relacionamento sobrevive à saída da pessoa?',
+   answers:[
+    {txt:'O relacionamento praticamente precisa ser reiniciado',tags:['DEPENDÊNCIA CRÍTICA DE PESSOA','RISCO INSTITUCIONAL'],score:0,impacts:{risco:10,gov:-8,intel:-6}},
+    {txt:'Perdemos parte do contexto e histórico',tags:['PERDA PARCIAL DE CONTEXTO'],score:1,impacts:{risco:5,intel:-3}},
+    {txt:'Conseguimos manter com algum esforço de handover',tags:['TRANSIÇÃO FRÁGIL'],score:2,impacts:{risco:-2,intel:3}},
+    {txt:'Relação institucionalizada — não depende da pessoa',tags:['RELACIONAMENTO INSTITUCIONALIZADO'],score:3,impacts:{gov:10,risco:-8,intel:8}},
+  ]},
+  {block:'GARGALOS',text:'O que mais dificulta o acompanhamento de parcerias estratégicas?',hint:'Onde você sente que poderia ter mais controle ou visibilidade?',
+   answers:[
+    {txt:'Falta de registro sistemático de interações',tags:['INTERAÇÃO SEM REGISTRO'],score:0,impacts:{intel:-8,gov:-5,risco:5}},
+    {txt:'Dificuldade de consolidar compromissos e entregas',tags:['COMPROMISSO INFORMAL'],score:1,impacts:{gov:-4,risco:4}},
+    {txt:'Comunicação descentralizada por múltiplos canais',tags:['CANAL FRAGMENTADO'],score:1,impacts:{col:-4,gov:-3}},
+    {txt:'Em geral gerenciamos bem',tags:['GESTÃO FUNCIONAL'],score:2,impacts:{gov:3}},
+  ]},
+  {block:'IA & EVOLUÇÃO',text:'O que facilitaria transformar relacionamentos em inteligência estratégica?',hint:'Como as interações poderiam gerar mais valor organizacional?',
+   answers:[
+    {txt:'Registro e síntese automática de interações',tags:['IA: CRM INTELIGENTE','IA: SÍNTESE DE RELACIONAMENTO'],score:1,impacts:{intel:10,gov:5}},
+    {txt:'Alertas sobre parceiros sem contato recente',tags:['IA: ALERTA DE RELACIONAMENTO','IA: MONITORAMENTO ATIVO'],score:1,impacts:{intel:8,risco:-4}},
+    {txt:'Relatórios executivos de parcerias gerados automaticamente',tags:['IA: RELATÓRIO DE PARCEIROS','IA: INTELIGÊNCIA INSTITUCIONAL'],score:1,impacts:{intel:8,vel:5}},
+    {txt:'O processo atual funciona bem',tags:['BAIXA PRONTIDÃO PARA IA'],score:0,impacts:{intel:-2}},
+  ]},
+]},
+{id:'cons', icon:'🏦', name:'CONSÓRCIO', sub:'Operacional', locked:true,
+ questions:[
+  {block:'OPERAÇÃO',text:'Quais atividades mais se repetem no atendimento do consórcio?',hint:'O que a equipe faz várias vezes ao dia ou semana?',
+   answers:[
+    {txt:'Responder as mesmas dúvidas por múltiplos canais',tags:['ATENDIMENTO REATIVO','DEMANDA REPETITIVA'],score:0,impacts:{vel:-6,stress:8,esc:-4}},
+    {txt:'Conferir manualmente documentos e informações',tags:['CONFERÊNCIA MANUAL CRÍTICA'],score:0,impacts:{vel:-5,stress:6,risco:4}},
+    {txt:'Atualizar status e comunicar andamentos',tags:['COMUNICAÇÃO MANUAL'],score:1,impacts:{vel:-3,stress:4}},
+    {txt:'Em geral as atividades são variadas e estratégicas',tags:['OPERAÇÃO EQUILIBRADA'],score:2,impacts:{stress:-2}},
+  ]},
+  {block:'COMUNICAÇÃO',text:'Como as solicitações chegam e são acompanhadas?',hint:'Existe canal único ou múltiplos canais simultâneos?',
+   answers:[
+    {txt:'WhatsApp, e-mail e telefone sem centralização',tags:['CANAL FRAGMENTADO','SEM RASTREABILIDADE'],score:0,impacts:{gov:-8,risco:6,intel:-4}},
+    {txt:'Alguns canais centralizados, outros ainda informais',tags:['CENTRALIZAÇÃO PARCIAL'],score:1,impacts:{gov:-3,risco:3}},
+    {txt:'Canal principal definido com alternativas',tags:['ESTRUTURAÇÃO FUNCIONAL'],score:2,impacts:{gov:5,risco:-2}},
+    {txt:'Canal único com triagem e rastreamento completo',tags:['GESTÃO DE ATENDIMENTO MADURA'],score:3,impacts:{gov:10,vel:6,risco:-6}},
+  ]},
+  {block:'CONHECIMENTO',text:'As informações dos clientes e processos estão organizadas de forma acessível?',hint:'É fácil recuperar o histórico de uma solicitação ou cliente?',
+   answers:[
+    {txt:'Difícil — informações em vários sistemas e planilhas',tags:['DADO FRAGMENTADO','ATENDIMENTO LENTO'],score:0,impacts:{intel:-8,vel:-5,stress:6}},
+    {txt:'Parcialmente acessível com esforço',tags:['ORGANIZAÇÃO FRÁGIL'],score:1,impacts:{intel:-3,vel:-2}},
+    {txt:'Em geral acessível no sistema principal',tags:['SISTEMA FUNCIONAL'],score:2,impacts:{intel:4,vel:3}},
+    {txt:'Totalmente acessível com histórico completo',tags:['GESTÃO DE DADOS MADURA'],score:3,impacts:{intel:10,vel:6,gov:5}},
+  ]},
+  {block:'GARGALOS',text:'O que mais gera lentidão no atendimento?',hint:'Onde o processo para ou atrasa com mais frequência?',
+   answers:[
+    {txt:'Dependência de aprovações de outras áreas',tags:['APROVAÇÃO LENTA','GARGALO EXTERNO'],score:0,impacts:{vel:-8,stress:8,col:-4}},
+    {txt:'Volume maior que a capacidade da equipe',tags:['SOBRECARGA OPERACIONAL'],score:0,impacts:{stress:10,vel:-5,esc:-4}},
+    {txt:'Busca de informações em sistemas diferentes',tags:['SISTEMA FRAGMENTADO'],score:1,impacts:{vel:-5,stress:4}},
+    {txt:'Processo bem dimensionado sem gargalos críticos',tags:['EFICIÊNCIA OPERACIONAL'],score:2,impacts:{stress:-3,vel:3}},
+  ]},
+  {block:'IA & EVOLUÇÃO',text:'O que reduziria mais o esforço operacional da equipe?',hint:'Pense no impacto imediato no dia a dia.',
+   answers:[
+    {txt:'Responder automaticamente as dúvidas mais frequentes',tags:['IA: ATENDIMENTO AUTOMATIZADO','IA: FAQ INTELIGENTE'],score:1,impacts:{intel:8,vel:6,stress:-5}},
+    {txt:'Triagem e classificação automática das solicitações',tags:['IA: TRIAGEM INTELIGENTE','IA: PRIORIZAÇÃO AUTOMÁTICA'],score:1,impacts:{intel:8,gov:5}},
+    {txt:'Geração automática de comunicados e atualizações',tags:['IA: COMUNICAÇÃO AUTOMÁTICA','IA: NOTIFICAÇÃO INTELIGENTE'],score:1,impacts:{intel:6,vel:5}},
+    {txt:'O volume atual é gerenciável',tags:['BAIXA PRONTIDÃO PARA IA'],score:0,impacts:{intel:-2}},
+  ]},
+]},
+{id:'seg', icon:'🛡️', name:'SEGUROS', sub:'Risco', locked:true,
+ questions:[
+  {block:'OPERAÇÃO',text:'Quais solicitações chegam com mais frequência e se repetem?',hint:'O que a equipe responde várias vezes por semana?',
+   answers:[
+    {txt:'Dúvidas sobre coberturas e status de sinistros',tags:['DEMANDA REPETITIVA','ATENDIMENTO MANUAL'],score:0,impacts:{vel:-5,stress:6,esc:-3}},
+    {txt:'Solicitações de documentos e comprovantes',tags:['DOCUMENTAÇÃO MANUAL'],score:0,impacts:{vel:-4,stress:5}},
+    {txt:'Pedidos de análise e aprovação de coberturas',tags:['ANÁLISE MANUAL FREQUENTE'],score:1,impacts:{vel:-3,stress:4}},
+    {txt:'Demandas variadas sem padrão dominante',tags:['OPERAÇÃO DIVERSIFICADA'],score:2,impacts:{stress:-2}},
+  ]},
+  {block:'COMUNICAÇÃO',text:'Como as informações dos clientes estão organizadas?',hint:'É fácil ter visão completa do histórico de um cliente?',
+   answers:[
+    {txt:'Espalhadas em sistemas, planilhas e e-mails',tags:['DADO FRAGMENTADO','VISÃO INCOMPLETA'],score:0,impacts:{intel:-8,vel:-5,risco:5}},
+    {txt:'No sistema principal, mas com lacunas',tags:['SISTEMA PARCIAL'],score:1,impacts:{intel:-3,vel:-2}},
+    {txt:'No sistema com histórico razoável',tags:['ORGANIZAÇÃO FUNCIONAL'],score:2,impacts:{intel:4,vel:3}},
+    {txt:'Histórico completo e integrado',tags:['GESTÃO DE DADOS MADURA'],score:3,impacts:{intel:10,vel:6,risco:-5}},
+  ]},
+  {block:'CONHECIMENTO',text:'O atendimento depende muito de conhecimento informal das pessoas?',hint:'O que acontece quando alguém novo entra na equipe?',
+   answers:[
+    {txt:'Sim — muito conhecimento está na cabeça das pessoas',tags:['DEPENDÊNCIA DE CONHECIMENTO INFORMAL','ONBOARDING CRÍTICO'],score:0,impacts:{risco:8,gov:-6,esc:-5}},
+    {txt:'Parcialmente — alguns processos documentados',tags:['DOCUMENTAÇÃO PARCIAL'],score:1,impacts:{risco:4,gov:-2}},
+    {txt:'Temos documentação para os processos principais',tags:['DOCUMENTAÇÃO FUNCIONAL'],score:2,impacts:{gov:4,risco:-3}},
+    {txt:'Processos documentados e treinamento estruturado',tags:['GESTÃO DO CONHECIMENTO ATIVA'],score:3,impacts:{gov:8,risco:-6,esc:5}},
+  ]},
+  {block:'GARGALOS',text:'Onde existem os maiores gargalos operacionais no atendimento de seguros?',hint:'O que mais atrasa a resolução de uma solicitação?',
+   answers:[
+    {txt:'Análises manuais que dependem de especialista',tags:['GARGALO DE ESPECIALISTA','ANÁLISE MANUAL CRÍTICA'],score:0,impacts:{vel:-8,stress:8,risco:4}},
+    {txt:'Busca de informações em sistemas diferentes',tags:['SISTEMA FRAGMENTADO'],score:0,impacts:{vel:-5,stress:5,intel:-3}},
+    {txt:'Aprovações que passam por múltiplas alçadas',tags:['APROVAÇÃO LENTA'],score:1,impacts:{vel:-4,stress:4}},
+    {txt:'Processo bem rodado sem gargalos críticos',tags:['EFICIÊNCIA OPERACIONAL'],score:2,impacts:{stress:-3}},
+  ]},
+  {block:'IA & EVOLUÇÃO',text:'O que tornaria o atendimento significativamente mais ágil?',hint:'Pense em onde a tecnologia poderia atuar diretamente.',
+   answers:[
+    {txt:'Análise inicial automática antes de chegar ao humano',tags:['IA: TRIAGEM DE SINISTROS','IA: ANÁLISE INICIAL AUTOMÁTICA'],score:1,impacts:{intel:8,vel:6,risco:-4}},
+    {txt:'Base de conhecimento para respostas automáticas',tags:['IA: ATENDIMENTO INTELIGENTE','IA: BASE DE RESPOSTAS'],score:1,impacts:{intel:8,vel:5}},
+    {txt:'Visão integrada de todas as informações do cliente',tags:['IA: PERFIL UNIFICADO','IA: VISÃO 360'],score:1,impacts:{intel:8,gov:5}},
+    {txt:'O atendimento atual é eficiente',tags:['BAIXA PRONTIDÃO PARA IA'],score:0,impacts:{intel:-2}},
+  ]},
+]},
+{id:'sec', icon:'🏛️', name:'SECRETARIA', sub:'Administrativa', locked:true,
+ questions:[
+  {block:'OPERAÇÃO',text:'Quais atividades administrativas mais consomem tempo da equipe?',hint:'O que ocupa a maior parte do dia operacional?',
+   answers:[
+    {txt:'Organizar e buscar documentos e informações',tags:['BUSCA MANUAL CRÍTICA','ORGANIZAÇÃO PRECÁRIA'],score:0,impacts:{vel:-6,stress:6,intel:-5}},
+    {txt:'Comunicação e agendamentos manuais',tags:['COMUNICAÇÃO MANUAL'],score:0,impacts:{vel:-5,stress:5}},
+    {txt:'Produzir atas, relatórios e registros formais',tags:['DOCUMENTAÇÃO MANUAL'],score:1,impacts:{vel:-3,stress:4}},
+    {txt:'Atividades estratégicas e de coordenação',tags:['OPERAÇÃO EQUILIBRADA'],score:2,impacts:{vel:3,gov:3}},
+  ]},
+  {block:'COMUNICAÇÃO',text:'Como as demandas e solicitações administrativas são registradas e acompanhadas?',hint:'Existe forma de saber o status de uma solicitação em andamento?',
+   answers:[
+    {txt:'Por e-mail e verbal — sem rastreamento',tags:['DEMANDA INFORMAL','SEM RASTREABILIDADE'],score:0,impacts:{gov:-8,risco:5,intel:-4}},
+    {txt:'Planilha ou lista parcial',tags:['CONTROLE FRÁGIL'],score:1,impacts:{gov:-3,risco:3}},
+    {txt:'Sistema básico com status visível',tags:['ESTRUTURAÇÃO INICIAL'],score:2,impacts:{gov:5,risco:-2}},
+    {txt:'Gestão completa com histórico e priorização',tags:['GESTÃO ADMINISTRATIVA MADURA'],score:3,impacts:{gov:10,vel:5,risco:-5}},
+  ]},
+  {block:'CONHECIMENTO',text:'Os documentos institucionais têm versão única e oficial claramente identificada?',hint:'Estatutos, regimentos, políticas — existe controle de versão?',
+   answers:[
+    {txt:'Não — existem múltiplas versões em circulação',tags:['VERSÃO CONFLITANTE','RISCO INSTITUCIONAL'],score:0,impacts:{gov:-10,risco:8,intel:-5}},
+    {txt:'Para alguns documentos sim, outros não',tags:['CONTROLE PARCIAL'],score:1,impacts:{gov:-4,risco:4}},
+    {txt:'Em geral há um documento principal reconhecido',tags:['CONTROLE FUNCIONAL'],score:2,impacts:{gov:4,risco:-2}},
+    {txt:'Versionamento formal com comunicação de atualizações',tags:['GESTÃO DOCUMENTAL MADURA'],score:3,impacts:{gov:10,risco:-8,intel:5}},
+  ]},
+  {block:'GARGALOS',text:'O que mais gera desgaste operacional na secretaria?',hint:'Onde o trabalho acumula ou precisa ser refeito com mais frequência?',
+   answers:[
+    {txt:'Buscar informações que estão dispersas',tags:['INFORMAÇÃO DESCENTRALIZADA'],score:0,impacts:{vel:-6,stress:7,intel:-4}},
+    {txt:'Retrabalho por falta de padrão nos documentos',tags:['PADRONIZAÇÃO AUSENTE'],score:0,impacts:{stress:6,gov:-5,vel:-3}},
+    {txt:'Comunicação para confirmação de informações básicas',tags:['COMUNICAÇÃO REDUNDANTE'],score:1,impacts:{vel:-3,stress:4}},
+    {txt:'Operação bem organizada com poucos atritos',tags:['EFICIÊNCIA ADMINISTRATIVA'],score:2,impacts:{stress:-3,gov:3}},
+  ]},
+  {block:'IA & EVOLUÇÃO',text:'O que mais liberaria tempo da equipe para atividades de maior valor?',hint:'Pense no que poderia ser feito de forma automática.',
+   answers:[
+    {txt:'Produção e organização de atas e registros',tags:['IA: ATA AUTOMÁTICA','IA: DOCUMENTAÇÃO INTELIGENTE'],score:1,impacts:{intel:8,vel:6}},
+    {txt:'Gestão e organização de agenda institucional',tags:['IA: AGENDA INTELIGENTE','IA: ASSISTENTE ADMINISTRATIVO'],score:1,impacts:{intel:6,vel:5,stress:-4}},
+    {txt:'Busca e recuperação de documentos e históricos',tags:['IA: BUSCA DOCUMENTAL','IA: BASE RAG ADMINISTRATIVA'],score:1,impacts:{intel:8,gov:5}},
+    {txt:'O volume atual está bem gerenciado',tags:['BAIXA PRONTIDÃO PARA IA'],score:0,impacts:{intel:-2}},
+  ]},
+]},
+{id:'reg', icon:'🌎', name:'REGIONAIS', sub:'Rede Nacional', locked:true,
+ questions:[
+  {block:'OPERAÇÃO',text:'Como as informações das regionais chegam à Fenasbac hoje?',hint:'Qual é o processo para receber dados e relatórios das ASBACs?',
+   answers:[
+    {txt:'E-mail com planilhas em formatos diferentes',tags:['DADO HETEROGÊNEO','CONSOLIDAÇÃO MANUAL CRÍTICA'],score:0,impacts:{gov:-8,intel:-6,vel:-5}},
+    {txt:'Planilha padrão, mas nem sempre preenchida igual',tags:['PADRONIZAÇÃO FRÁGIL'],score:1,impacts:{gov:-3,intel:-3}},
+    {txt:'Sistema parcialmente integrado',tags:['INTEGRAÇÃO PARCIAL'],score:2,impacts:{gov:4,intel:4}},
+    {txt:'Plataforma unificada com dados em tempo real',tags:['REDE INTEGRADA'],score:3,impacts:{gov:12,intel:10,esc:8}},
+  ]},
+  {block:'COMUNICAÇÃO',text:'Qual é o nível de padronização de processos entre as regionais?',hint:'As ASBACs operam de forma similar ou cada uma tem sua própria forma?',
+   answers:[
+    {txt:'Muito diferente — cada regional opera à sua maneira',tags:['HETEROGENEIDADE CRÍTICA','SEM PADRONIZAÇÃO'],score:0,impacts:{gov:-10,esc:-6,col:-4}},
+    {txt:'Há diretrizes, mas a execução varia muito',tags:['PADRONIZAÇÃO FRÁGIL'],score:1,impacts:{gov:-4,esc:-3}},
+    {txt:'Padrões básicos seguidos na maioria',tags:['ALINHAMENTO PARCIAL'],score:2,impacts:{gov:4,esc:3}},
+    {txt:'Processos padronizados e auditados',tags:['REDE PADRONIZADA'],score:3,impacts:{gov:10,esc:8,col:6}},
+  ]},
+  {block:'CONHECIMENTO',text:'Como boas práticas de uma regional são compartilhadas com as outras?',hint:'Quando uma regional resolve algo bem, as outras ficam sabendo?',
+   answers:[
+    {txt:'Raramente — cada regional aprende por conta própria',tags:['SILO REGIONAL','APRENDIZADO ISOLADO'],score:0,impacts:{intel:-8,col:-6,esc:-4}},
+    {txt:'Em encontros e reuniões periódicas',tags:['COMPARTILHAMENTO PONTUAL'],score:1,impacts:{col:3,intel:3}},
+    {txt:'Canal informal de comunicação entre regionais',tags:['COMUNICAÇÃO INFORMAL'],score:2,impacts:{col:4,intel:4}},
+    {txt:'Processo formal de replicação de boas práticas',tags:['REDE DE APRENDIZADO'],score:3,impacts:{intel:10,col:8,esc:6}},
+  ]},
+  {block:'GARGALOS',text:'O que mais dificulta ter uma visão consolidada da rede nacional?',hint:'Qual é o maior obstáculo para inteligência nacional.',
+   answers:[
+    {txt:'Dados em formatos e sistemas incompatíveis',tags:['DADO INCOMPATÍVEL','ANÁLISE IMPOSSÍVEL'],score:0,impacts:{gov:-10,intel:-8,vel:-5}},
+    {txt:'Regionais com diferentes níveis de maturidade',tags:['MATURIDADE HETEROGÊNEA'],score:1,impacts:{esc:-4,gov:-3}},
+    {txt:'Falta de processo padronizado de reporte',tags:['REPORTE INFORMAL'],score:1,impacts:{gov:-4,intel:-3}},
+    {txt:'Em geral conseguimos consolidar com esforço razoável',tags:['CONSOLIDAÇÃO FUNCIONAL'],score:2,impacts:{gov:3}},
+  ]},
+  {block:'IA & EVOLUÇÃO',text:'O que transformaria dados das regionais em inteligência estratégica para a Fenasbac?',hint:'Pense no que permitiria decisões nacionais mais embasadas.',
+   answers:[
+    {txt:'Normalização e consolidação automática dos dados',tags:['IA: CONSOLIDAÇÃO NACIONAL','IA: NORMALIZAÇÃO AUTOMÁTICA'],score:1,impacts:{intel:12,gov:6}},
+    {txt:'Dashboards nacionais com indicadores comparativos',tags:['IA: DASHBOARD NACIONAL','IA: INTELIGÊNCIA REGIONAL'],score:1,impacts:{intel:10,gov:8}},
+    {txt:'Alertas sobre regionais em risco ou com desvios',tags:['IA: MONITOR REGIONAL','IA: ALERTA PROATIVO'],score:1,impacts:{intel:8,risco:-5}},
+    {txt:'O modelo atual é suficiente',tags:['BAIXA PRONTIDÃO PARA IA'],score:0,impacts:{intel:-2}},
+  ]},
+]},
+];
+
+const STATS=[
+  {id:'gov',label:'GOV',icon:'⚖️',color:'#02FFFF'},
+  {id:'intel',label:'INT',icon:'🧠',color:'#00ff88'},
+  {id:'esc',label:'ESC',icon:'📈',color:'#4488ff'},
+  {id:'stress',label:'STR',icon:'💢',color:'#ff4444'},
+  {id:'vel',label:'VEL',icon:'⚡',color:'#ffdd00'},
+  {id:'col',label:'COL',icon:'🤝',color:'#aa88ff'},
+  {id:'risco',label:'RSC',icon:'☠️',color:'#ff6600'},
+];
+
+const LEVELS=[
+  {lv:1,name:'Observador',xpMax:80},
+  {lv:2,name:'Analista',xpMax:180},
+  {lv:3,name:'Diagnosticador',xpMax:320},
+  {lv:4,name:'Estrategista',xpMax:480},
+  {lv:5,name:'Arquiteto de IA',xpMax:680},
+  {lv:6,name:'Mestre da Evolução',xpMax:950},
+];
+const MAT_LEVELS=['REATIVA','INICIAL','EM CONSOLIDAÇÃO','GOVERNANÇA','INTELIGENTE','ESCALÁVEL'];
+const CHAOS_NOTIFS=['⚡ Demanda chegou sem briefing','🚨 Planilha desatualizada em circulação','📱 "URGENTE — alguém sabe onde está o arquivo?"','🔴 Reunião sem pauta definida','⚠️ Processo que depende só de uma pessoa','💬 "quem aprova isso?"'];
+
+let S={
+  ind:{gov:30,vel:40,col:30,stress:70,esc:20,intel:15,risco:65},
+  areas:Object.fromEntries(AREAS.map(a=>[a.id,{visited:false,score:0,locked:a.locked,gargalos:[],iaOps:[],answers:[]}])),
+  current:null,qIdx:0,
+  xp:0,level:1,notifIdx:0,notifTimer:null,
+  diagText:''
+};
+
+function clamp(v){return Math.min(100,Math.max(0,Math.round(v)));}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function calcMat(){
+  let v=AREAS.filter(a=>S.areas[a.id].visited).length;
+  return Math.max(5,Math.min(95,Math.round(v*5+S.ind.gov*0.25+S.ind.intel*0.3-S.ind.stress*0.08-S.ind.risco*0.06+5)));
+}
+function matLvlIdx(p){return p<18?0:p<33?1:p<50?2:p<65?3:p<80?4:5;}
+
+/* Avatar */
+function drawAvatar(lv){
+  const c=document.getElementById('avatar');if(!c)return;
+  const ctx=c.getContext('2d');ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,28,28);
+  const pal=[
+    {skin:'#f4c27a',shirt:'#334',hair:'#3a2a1a',acc:'#556',bg:'#1a1a2e'},
+    {skin:'#f4c27a',shirt:'#1a3a6a',hair:'#3a2a1a',acc:'#4488ff',bg:'#0a0a1e'},
+    {skin:'#f4d090',shirt:'#1a5a3a',hair:'#2a1a0a',acc:'#00ff88',bg:'#0a1a10'},
+    {skin:'#f0c070',shirt:'#5a1a6a',hair:'#1a0a2a',acc:'#cc44ff',bg:'#100a1a'},
+    {skin:'#ffe0a0',shirt:'#6a4a00',hair:'#0a0a0a',acc:'#ffdd44',bg:'#1a1400'},
+    {skin:'#ffe8b0',shirt:'#002060',hair:'#0a0a0a',acc:'#02FFFF',bg:'#000a14'},
+  ];
+  const p=pal[Math.min(lv-1,5)];
+  const px=(x,y,col,w=1,h=1)=>{ctx.fillStyle=col;ctx.fillRect(x,y,w,h);};
+  px(0,0,p.bg,28,28);
+  px(8,14,p.shirt,12,12);px(6,14,p.skin,3,8);px(19,14,p.skin,3,8);px(9,14,p.shirt,10,10);
+  px(11,11,p.skin,6,3);px(8,3,p.skin,12,10);px(8,2,p.hair,12,4);px(7,4,p.hair,2,4);px(19,4,p.hair,2,4);
+  px(10,7,lv>=4?p.acc:'#222',2,2);px(16,7,lv>=4?p.acc:'#222',2,2);
+  if(lv<=2)px(11,10,'#c07050',6,2);
+  else if(lv<=4){px(11,10,'#c07050',6,2);px(10,9,'#c07050',1,1);px(17,9,'#c07050',1,1);}
+  else{px(10,9,'#ffaa44',8,3);px(11,10,'#fff',6,1);}
+  if(lv>=2)px(9,2,p.acc,10,2);
+  if(lv>=3){px(19,14,p.acc,2,2);px(6,14,p.acc,2,2);}
+  if(lv>=4){px(11,2,p.acc,6,2);px(10,1,p.acc,8,1);}
+  if(lv>=5){px(12,0,p.acc,4,1);px(11,0,'#ffdd44',1,1);px(16,0,'#ffdd44',1,1);}
+  if(lv>=6){ctx.globalAlpha=0.2;px(4,1,'#02FFFF',20,26);ctx.globalAlpha=1;px(8,3,p.skin,12,10);px(8,2,p.hair,12,4);px(7,4,p.hair,2,4);px(19,4,p.hair,2,4);px(10,7,'#02FFFF',2,2);px(16,7,'#02FFFF',2,2);px(10,9,'#ffaa44',8,3);px(11,10,'#fff',6,1);px(11,2,p.acc,6,2);px(10,1,p.acc,8,1);px(12,0,p.acc,4,1);}
+  px(9,24,p.shirt,4,4);px(15,24,p.shirt,4,4);px(8,26,'#222',5,2);px(15,26,'#222',5,2);
+}
+
+function gainXP(amt){
+  S.xp+=amt;
+  let lv=LEVELS[S.level-1];
+  if(S.xp>=lv.xpMax&&S.level<6){
+    S.level++;
+    let nl=LEVELS[S.level-1];
+    let b=document.getElementById('lvlup');
+    document.getElementById('lvlup-sub').textContent='NOVO TÍTULO: '+nl.name+'\nSEU AVATAR EVOLUIU!';
+    b.style.display='block';setTimeout(()=>{b.style.display='none';},3200);
+    drawAvatar(S.level);
+  }
+  updateHUD();
+}
+
+function updateHUD(){
+  let lv=LEVELS[S.level-1];
+  let nl=LEVELS[Math.min(S.level,5)];
+  let pct=Math.min(100,Math.round((S.xp/nl.xpMax)*100));
+  document.getElementById('xp-fill').style.width=pct+'%';
+  document.getElementById('xp-val').textContent=S.xp+'/'+nl.xpMax;
+  document.getElementById('level-badge').textContent='LV '+S.level+' '+lv.name.toUpperCase();
+  let v=AREAS.filter(a=>S.areas[a.id].visited).length;
+  document.getElementById('area-count').textContent=v+'/13 ÁREAS';
+}
+
+function renderStats(){
+  document.getElementById('stats-row').innerHTML=STATS.map(st=>{
+    let v=clamp(S.ind[st.id]);
+    return `<div class="stat"><div class="stat-icon">${st.icon}</div><div class="stat-label">${st.label}</div><div class="stat-bar"><div class="stat-fill" style="width:${v}%;background:${st.color}"></div></div><div class="stat-val">${v}</div></div>`;
+  }).join('');
+}
+
+function unlockAreas(){
+  let v=AREAS.filter(a=>S.areas[a.id].visited).length;
+  const u=id=>{S.areas[id].locked=false;};
+  if(v>=1){['gep','dir'].forEach(u);}if(v>=2){['audit','fin'].forEach(u);}
+  if(v>=3){['parc','cons'].forEach(u);}if(v>=4){['seg','sec'].forEach(u);}
+  if(v>=5){['reg'].forEach(u);}
+}
+
+function manageNotifs(){
+  let v=AREAS.filter(a=>S.areas[a.id].visited).length;
+  if(v>5){if(S.notifTimer){clearInterval(S.notifTimer);S.notifTimer=null;}document.getElementById('notif-stack').innerHTML='';return;}
+  if(!S.notifTimer){addNotif();S.notifTimer=setInterval(()=>{let ns=document.getElementById('notif-stack');while(ns.children.length>=2)ns.removeChild(ns.firstChild);addNotif();},4000);}
+}
+function addNotif(){
+  let ns=document.getElementById('notif-stack');
+  let d=document.createElement('div');d.className='notif';d.textContent=CHAOS_NOTIFS[S.notifIdx%CHAOS_NOTIFS.length];S.notifIdx++;ns.appendChild(d);
+}
+
+function renderMap(){
+  document.getElementById('world-map').innerHTML=AREAS.map(a=>{
+    let st=S.areas[a.id];
+    let cls='room'+(st.visited?' visited':st.locked?' locked':'');
+    let score=st.visited?`<div class="room-score">✓ ${st.score}%</div>`:'';
+    let lock=st.locked?'<div style="font-size:9px;margin-top:2px;opacity:0.5">🔒</div>':'';
+    return `<button class="${cls}" onclick="enterArea('${a.id}')" ${st.locked?'disabled':''}><div class="room-icon">${a.icon}</div><div class="room-name">${a.name}</div><div style="font-size:4px;color:#556;margin-top:2px">${a.sub}</div>${score}${lock}</button>`;
+  }).join('');
+  let v=AREAS.filter(a=>S.areas[a.id].visited).length;
+  document.getElementById('btn-diag').style.display=v>0?'':'none';
+  manageNotifs();
+}
+
+function show(id){['screen-map','screen-area','screen-result'].forEach(s=>document.getElementById(s).classList.toggle('hidden',s!==id));}
+
+function enterArea(id){
+  let a=AREAS.find(x=>x.id===id);if(!a||S.areas[id].locked)return;
+  S.current=id;S.qIdx=0;
+  show('screen-area');
+  document.getElementById('interview-area').textContent=a.icon+' '+a.name+' — '+a.sub.toUpperCase();
+  renderQuestion(a);
+}
+
+function renderStepDots(total,cur){
+  let h='';
+  for(let i=0;i<total;i++){let cls=i<cur?'sdot done':i===cur?'sdot active':'sdot';h+=`<div class="${cls}"></div>`;}
+  h+=`<span class="step-txt">PERGUNTA ${cur+1}/${total}</span>`;
+  document.getElementById('step-dots').innerHTML=h;
+  document.getElementById('interview-prog').textContent='ÁREA '+(AREAS.findIndex(a=>a.id===S.current)+1)+'/13';
+}
+
+function renderQuestion(area){
+  let q=area.questions[S.qIdx];
+  renderStepDots(area.questions.length,S.qIdx);
+  document.getElementById('block-label').textContent='▶ BLOCO: '+q.block;
+  document.getElementById('question-text').textContent=q.text;
+  document.getElementById('question-hint').textContent=q.hint;
+  document.getElementById('insight-zone').innerHTML='';
+  document.getElementById('area-actions').classList.add('hidden');
+
+  // Determine answer style by score values
+  document.getElementById('answers').innerHTML=q.answers.map((ans,i)=>{
+    let extra=ans.score===0?' red':ans.score===3?' green':'';
+    return `<button class="ans-btn${extra}" onclick="selectAnswer(${i})" id="ans${i}">[${String.fromCharCode(65+i)}] ${ans.txt}</button>`;
+  }).join('');
+}
+
+async function selectAnswer(idx){
+  let area=AREAS.find(a=>a.id===S.current);
+  let q=area.questions[S.qIdx];
+  let ans=q.answers[idx];
+
+  document.querySelectorAll('.ans-btn').forEach((b,i)=>{b.disabled=true;if(i===idx)b.classList.add('selected');});
+
+  // Apply impacts
+  Object.entries(ans.impacts).forEach(([k,v])=>{if(S.ind[k]!==undefined)S.ind[k]=clamp(S.ind[k]+v);});
+  renderStats();
+
+  // Store in area data
+  let aData=S.areas[S.current];
+  aData.answers.push({question:q.text,answer:ans.txt,score:ans.score,tags:ans.tags});
+  ans.tags.forEach(t=>{
+    if(t.startsWith('IA:')){if(!aData.iaOps.includes(t))aData.iaOps.push(t);}
+    else{if(!aData.gargalos.includes(t))aData.gargalos.push(t);}
+  });
+
+  gainXP(ans.score===0?5:ans.score===1?8:ans.score===2?10:12);
+
+  // Show insight
+  let iz=document.getElementById('insight-zone');
+  iz.innerHTML=`<div class="insight-box"><span class="cursor">ANALISANDO RESPOSTA...</span></div>`;
+
+  let isGargalo=ans.score<=1;
+  let prompt=isGargalo
+    ? `Consultor de transformação digital. A área de ${area.name} da Fenasbac respondeu: "${ans.txt}" sobre "${q.text}". Em 1 frase direta (máx 45 palavras), nomeie o gargalo organizacional revelado por essa resposta e seu impacto. Sem elogios.`
+    : `Consultor de transformação digital. A área de ${area.name} da Fenasbac respondeu: "${ans.txt}" sobre "${q.text}". Em 1 frase (máx 35 palavras), confirme o ponto positivo e indique o próximo nível de evolução possível.`;
+
+  let tagHtml=ans.tags.map(t=>{
+    let cls=t.startsWith('IA:')?'cyan':ans.score<=1?'red':'yellow';
+    return `<span class="gtag ${cls}">${t}</span>`;
+  }).join('');
+
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:100,messages:[{role:'user',content:prompt}]})});
+    const d=await r.json();
+    iz.innerHTML=`<div class="insight-box">${d.content?.[0]?.text||'Gargalo registrado.'}<div class="gargalo-tags">${tagHtml}</div></div>`;
+  }catch(e){iz.innerHTML=`<div class="insight-box">Resposta registrada.<div class="gargalo-tags">${tagHtml}</div></div>`;}
+
+  let az=document.getElementById('area-actions');az.classList.remove('hidden');
+  let btn=document.getElementById('btn-next');
+  let isLast=S.qIdx>=area.questions.length-1;
+  btn.textContent=isLast?'CONCLUIR DIAGNÓSTICO ▶':'PRÓXIMA PERGUNTA ▶';
+  btn.onclick=isLast?()=>finishArea():()=>nextQuestion();
+}
+
+function nextQuestion(){
+  let area=AREAS.find(a=>a.id===S.current);
+  S.qIdx++;
+  document.getElementById('insight-zone').innerHTML='';
+  document.getElementById('area-actions').classList.add('hidden');
+  renderQuestion(area);
+}
+
+function finishArea(){
+  let id=S.current;
+  let aData=S.areas[id];
+  let avgScore=aData.answers.length?Math.round((aData.answers.reduce((s,a)=>s+a.score,0)/aData.answers.length)*33):0;
+  aData.visited=true;aData.score=avgScore;aData.locked=false;
+  gainXP(20);unlockAreas();backToMap();
+}
+
+function backToMap(){show('screen-map');renderMap();renderStats();updateHUD();}
+
+/* ── RESULT ── */
+async function showResult(){
+  show('screen-result');
+  let visited=AREAS.filter(a=>S.areas[a.id].visited);
+  let m=calcMat();
+  let mlvl=MAT_LEVELS[matLvlIdx(m)];
+  document.getElementById('overall-score').textContent=m+'%';
+  document.getElementById('overall-level').textContent=mlvl;
+  document.getElementById('result-sub').textContent='FENASBAC — LV'+S.level+' '+LEVELS[S.level-1].name.toUpperCase();
+
+  document.getElementById('score-details').innerHTML=STATS.slice(0,4).map(st=>{
+    let v=clamp(S.ind[st.id]);
+    return `<div class="score-row"><span class="score-row-label">${st.icon} ${st.label}</span><div class="score-row-bar"><div class="score-row-fill" style="width:${v}%;background:${st.color}"></div></div><span class="score-row-val">${v}</span></div>`;
+  }).join('');
+
+  // Mat grid
+  document.getElementById('mat-grid').innerHTML=AREAS.map(a=>{
+    let st=S.areas[a.id];
+    let cls='mat-card '+(st.visited?'visited':'not-visited');
+    let sc=st.visited?st.score:null;
+    let lvl=sc!==null?MAT_LEVELS[matLvlIdx(sc*1.2)]:'N/A';
+    let bar=st.visited?`<div class="mat-bar-wrap"><div class="mat-bar-fill" style="width:${sc}%;background:${sc<40?'#ff4444':sc<65?'#ffaa00':'#02FFFF'}"></div></div><div class="mat-score">${sc}%</div><div class="mat-level-tag">${lvl}</div>`:'<div class="mat-score" style="color:#556">N/A</div>';
+    return `<div class="${cls}"><div class="mat-card-icon">${a.icon}</div><div class="mat-card-name">${a.name}</div>${bar}</div>`;
+  }).join('');
+
+  // Gargalos zone
+  let gHtml=visited.map(a=>{
+    let aData=S.areas[a.id];
+    if(!aData.gargalos.length&&!aData.iaOps.length)return'';
+    let garTagsHtml=aData.gargalos.slice(0,4).map(t=>`<span class="gtag red">${t}</span>`).join('');
+    let iaTagsHtml=aData.iaOps.slice(0,3).map(t=>`<span class="gtag cyan">${t}</span>`).join('');
+    return `<div class="gargalo-area-box"><div class="gargalo-area-title">${a.icon} ${a.name}</div><div class="gargalo-tags">${garTagsHtml}${iaTagsHtml}</div></div>`;
+  }).join('');
+  document.getElementById('gargalos-zone').innerHTML=gHtml||'<div style="font-size:4px;color:#556;padding:6px">NENHUMA ÁREA VISITADA</div>';
+
+  // Roadmap
+  const phases=[
+    {title:'FASE 1 — DIAGNÓSTICO E TRIAGEM',desc:'Mapear gargalos em TI, Marketing e Inovação. Implementar canais únicos e gates de governança.',done:visited.length>=3},
+    {title:'FASE 2 — ESTRUTURAÇÃO DE PROCESSOS',desc:'Formalizar fluxos em GEP, Eventos e Diretoria. Criar repositórios e distribuir aprovações.',done:visited.length>=6},
+    {title:'FASE 3 — AUTOMAÇÃO E IA OPERACIONAL',desc:'Agentes de IA em Financeiro, Auditoria e Consórcio. Eliminar processos manuais críticos.',done:visited.length>=9},
+    {title:'FASE 4 — INTELIGÊNCIA ORGANIZACIONAL',desc:'CRM, conformidade e rede nacional integrados. Decisões orientadas por dados.',done:visited.length>=12},
+    {title:'FASE 5 — ORGANIZAÇÃO ESCALÁVEL',desc:'IA estratégica consolidada. Previsibilidade total. Cultura data-driven institucionalizada.',done:visited.length>=13},
+  ];
+  let rHtml='<div class="roadmap-line"></div>';
+  phases.forEach((p,i)=>{
+    let isDone=p.done,isNext=!isDone&&i===phases.findIndex(x=>!x.done);
+    let dotCls=isDone?'roadmap-dot done':isNext?'roadmap-dot next':'roadmap-dot';
+    let tagCls=isDone?'tag-done':isNext?'tag-next':'tag-future';
+    let tagTxt=isDone?'CONCLUÍDO':isNext?'PRÓXIMA PRIORIDADE':'PENDENTE';
+    rHtml+=`<div class="roadmap-item"><div class="${dotCls}"></div><div class="roadmap-item-title">${p.title}</div><div class="roadmap-item-desc">${p.desc}</div><span class="roadmap-item-tag ${tagCls}">${tagTxt}</span></div>`;
+  });
+  document.getElementById('roadmap-track').innerHTML=rHtml;
+
+  // AI diagnosis
+  let rt=document.getElementById('diag-text');
+  rt.textContent='';rt.classList.add('cursor');
+  let aList=visited.map(a=>`${a.name}(maturidade ${S.areas[a.id].score}%)`).join(', ')||'nenhuma';
+  let topGargalos=visited.flatMap(a=>S.areas[a.id].gargalos).filter(t=>!t.startsWith('IA:')).slice(0,6).join(', ');
+  let topIA=visited.flatMap(a=>S.areas[a.id].iaOps).slice(0,5).join(', ');
+  let prompt=`Consultor sênior de transformação digital. Diagnóstico executivo em 3 parágrafos (máx 160 palavras) da Fenasbac. Áreas mapeadas: ${aList}. Gargalos identificados: ${topGargalos||'em mapeamento'}. Oportunidades de IA detectadas: ${topIA||'em mapeamento'}. Maturidade geral: ${m}% — ${mlvl}. Estruture: 1º — principais gargalos sistêmicos. 2º — oportunidades de IA mais impactantes. 3º — 1 quick win imediato e 1 recomendação estratégica. Executivo, direto, sem elogios.`;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:prompt}]})});
+    const d=await r.json();
+    let txt=d.content?.[0]?.text||'Diagnóstico em elaboração.';
+    S.diagText=txt;
+    await typeText(rt,txt);
+  }catch(e){rt.textContent='Diagnóstico gerado com base nas respostas coletadas.';S.diagText=rt.textContent;}
+  rt.classList.remove('cursor');
+}
+
+async function typeText(el,text){el.textContent='';for(let i=0;i<text.length;i++){el.textContent+=text[i];if(i%4===0)await sleep(8);}}
+
+/* ── EXPORT .DOCX ── */
+async function exportDoc(){
+  const btn=document.getElementById('btn-export');
+  btn.textContent='GERANDO...';btn.disabled=true;
+  try{
+    const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,BorderStyle,AlignmentType,ShadingType}=docx;
+    let visited=AREAS.filter(a=>S.areas[a.id].visited);
+    let m=calcMat();let mlvl=MAT_LEVELS[matLvlIdx(m)];
+    let lv=LEVELS[S.level-1];let today=new Date().toLocaleDateString('pt-BR');
+    const blue='002060',cyan='0225EB',white='FFFFFF',lightBlue='EEF2FF';
+
+    const hdrPara=t=>new Paragraph({children:[new TextRun({text:t,bold:true,color:white,size:28,font:'Exo 2'})],shading:{type:ShadingType.SOLID,color:blue},spacing:{before:200,after:200},indent:{left:200,right:200}});
+    const secTitle=t=>new Paragraph({children:[new TextRun({text:t.toUpperCase(),bold:true,color:white,size:22,font:'Exo 2'})],shading:{type:ShadingType.SOLID,color:cyan},spacing:{before:300,after:160},indent:{left:160,right:160}});
+    const body=(t,opts={})=>new Paragraph({children:[new TextRun({text:t,size:20,font:'Exo 2',...opts})],spacing:{before:80,after:80},indent:{left:160}});
+    const kpiRow=items=>new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[new TableRow({children:items.map(item=>new TableCell({children:[
+      new Paragraph({children:[new TextRun({text:item.label,size:16,color:'888888',font:'Exo 2'})],alignment:AlignmentType.CENTER,spacing:{before:60}}),
+      new Paragraph({children:[new TextRun({text:item.value,bold:true,size:32,color:cyan,font:'Exo 2'})],alignment:AlignmentType.CENTER}),
+      new Paragraph({children:[new TextRun({text:item.sub||'',size:14,color:'888888',font:'Exo 2'})],alignment:AlignmentType.CENTER,spacing:{after:60}}),
+    ],shading:{type:ShadingType.SOLID,color:lightBlue},borders:{top:{style:BorderStyle.SINGLE,size:6,color:cyan},bottom:{style:BorderStyle.SINGLE,size:6,color:cyan},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE}}}))})]},margins:{top:60,bottom:60,left:60,right:60}});
+
+    // Area diagnosis table
+    const areaRows=[
+      new TableRow({children:[
+        ...[['ÁREA','40%'],['MATURIDADE','20%'],['GARGALOS DETECTADOS','40%']].map(([txt,w])=>
+          new TableCell({children:[new Paragraph({children:[new TextRun({text:txt,bold:true,color:white,size:18,font:'Exo 2'})],alignment:AlignmentType.CENTER})],shading:{type:ShadingType.SOLID,color:cyan},width:{size:parseInt(w),type:WidthType.PERCENTAGE}})
+        )
+      ]}),
+      ...AREAS.map((a,i)=>{
+        let st=S.areas[a.id];
+        let shade=i%2===0?lightBlue:white;
+        let sc=st.visited?st.score:null;
+        let gargalos=st.gargalos.filter(t=>!t.startsWith('IA:')).slice(0,3).join(' | ')||'—';
+        return new TableRow({children:[
+          new TableCell({children:[new Paragraph({children:[new TextRun({text:a.icon+' '+a.name,size:18,font:'Exo 2'})],indent:{left:80}})],shading:{type:ShadingType.SOLID,color:shade}}),
+          new TableCell({children:[new Paragraph({children:[new TextRun({text:sc!==null?sc+'%':'N/A',size:18,bold:true,color:sc!==null?(sc>=65?'006600':sc>=40?'996600':'cc0000'):'888888',font:'Exo 2'})],alignment:AlignmentType.CENTER})],shading:{type:ShadingType.SOLID,color:shade}}),
+          new TableCell({children:[new Paragraph({children:[new TextRun({text:gargalos,size:14,font:'Exo 2',color:st.visited?'333333':'888888'})],indent:{left:80}})],shading:{type:ShadingType.SOLID,color:shade}}),
+        ]});
+      }),
+    ];
+
+    // IA opps table
+    const iaRows=[
+      new TableRow({children:[
+        ...[['ÁREA','30%'],['OPORTUNIDADES DE IA IDENTIFICADAS','70%']].map(([txt,w])=>
+          new TableCell({children:[new Paragraph({children:[new TextRun({text:txt,bold:true,color:white,size:18,font:'Exo 2'})],alignment:AlignmentType.CENTER})],shading:{type:ShadingType.SOLID,color:cyan},width:{size:parseInt(w),type:WidthType.PERCENTAGE}})
+        )
+      ]}),
+      ...visited.filter(a=>S.areas[a.id].iaOps.length).map((a,i)=>new TableRow({children:[
+        new TableCell({children:[new Paragraph({children:[new TextRun({text:a.icon+' '+a.name,size:18,font:'Exo 2'})],indent:{left:80}})],shading:{type:ShadingType.SOLID,color:i%2===0?lightBlue:white}}),
+        new TableCell({children:[new Paragraph({children:[new TextRun({text:S.areas[a.id].iaOps.join(' | '),size:14,font:'Exo 2'})],indent:{left:80}})],shading:{type:ShadingType.SOLID,color:i%2===0?lightBlue:white}}),
+      ]})),
+    ];
+
+    const phases=[
+      {title:'FASE 1 — DIAGNÓSTICO E TRIAGEM',desc:'Canais únicos, gates de governança, triagem inteligente.',done:visited.length>=3},
+      {title:'FASE 2 — ESTRUTURAÇÃO',desc:'Repositórios, aprovações distribuídas, documentação.',done:visited.length>=6},
+      {title:'FASE 3 — AUTOMAÇÃO E IA',desc:'Agentes operacionais, eliminação de processos manuais críticos.',done:visited.length>=9},
+      {title:'FASE 4 — INTELIGÊNCIA',desc:'CRM, conformidade, rede nacional integrada.',done:visited.length>=12},
+      {title:'FASE 5 — ESCALABILIDADE',desc:'IA estratégica, cultura data-driven, previsibilidade total.',done:visited.length>=13},
+    ];
+
+    const doc=new Document({sections:[{properties:{},children:[
+      hdrPara('MISSÃO IA: EVOLUÇÃO ORGANIZACIONAL'),
+      body('Diagnóstico de Maturidade Digital e Mapeamento de Gargalos — Fenasbac'),
+      body('Data: '+today+' | Nível: LV'+S.level+' — '+lv.name),
+      new Paragraph({spacing:{before:300}}),
+      secTitle('1. Indicadores de Maturidade'),
+      new Paragraph({spacing:{before:120,after:120}}),
+      kpiRow([{label:'Maturidade Geral',value:m+'%',sub:mlvl},{label:'Nível',value:'LV '+S.level,sub:lv.name},{label:'Áreas Mapeadas',value:visited.length+'/13'},{label:'XP Acumulado',value:S.xp+'pts'}]),
+      new Paragraph({spacing:{before:160,after:160}}),
+      kpiRow([{label:'Governança',value:S.ind.gov+''},{label:'Inteligência',value:S.ind.intel+''},{label:'Stress Op.',value:S.ind.stress+''},{label:'Risco Op.',value:S.ind.risco+''}]),
+      new Paragraph({spacing:{before:300}}),
+      secTitle('2. Diagnóstico Executivo'),
+      new Paragraph({spacing:{before:120,after:80}}),
+      ...(S.diagText||'Diagnóstico não gerado.').split('\n').filter(l=>l.trim()).map(l=>body(l)),
+      new Paragraph({spacing:{before:300}}),
+      secTitle('3. Maturidade e Gargalos por Área'),
+      new Paragraph({spacing:{before:120,after:80}}),
+      new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:areaRows,margins:{top:60,bottom:60,left:80,right:80}}),
+      new Paragraph({spacing:{before:300}}),
+      secTitle('4. Oportunidades de IA Identificadas'),
+      new Paragraph({spacing:{before:120,after:80}}),
+      iaRows.length>1?new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:iaRows,margins:{top:60,bottom:60,left:80,right:80}}):body('Nenhuma área com oportunidades de IA mapeadas ainda.'),
+      new Paragraph({spacing:{before:300}}),
+      secTitle('5. Roadmap de Transformação Digital'),
+      new Paragraph({spacing:{before:120,after:80}}),
+      ...phases.flatMap(p=>[
+        new Paragraph({children:[new TextRun({text:(p.done?'✓ ':'○ ')+p.title,bold:true,size:20,color:p.done?'006600':cyan,font:'Exo 2'})],spacing:{before:160,after:60},indent:{left:160}}),
+        body(p.desc),
+      ]),
+      new Paragraph({spacing:{before:400}}),
+      new Paragraph({children:[new TextRun({text:'Fenasbac — Coordenação de TI | Missão IA: Evolução Organizacional | '+today,size:16,color:'888888',font:'Exo 2'})],alignment:AlignmentType.CENTER,border:{top:{style:BorderStyle.SINGLE,size:4,color:'CCCCCC'}},spacing:{before:200}}),
+    ]}]});
+
+    const blob=await Packer.toBlob(doc);
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='DiagnosticoIA_Fenasbac_'+today.replace(/\//g,'-')+'.docx';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+    btn.textContent='✓ EXPORTADO!';
+    setTimeout(()=>{btn.textContent='EXPORTAR RELATÓRIO .DOCX';btn.disabled=false;},3000);
+  }catch(e){console.error(e);btn.textContent='ERRO — TENTE NOVAMENTE';btn.disabled=false;}
+}
+
+drawAvatar(1);renderStats();updateHUD();renderMap();
+</script>

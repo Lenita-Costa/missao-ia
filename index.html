@@ -125,21 +125,10 @@ canvas#avatar{width:56px;height:56px;border:2px solid #445;background:#1a1a2e;bo
 .mat-level-tag{font-size:3px;color:#ffaa00;margin-top:2px}
 .gargalo-area-box{background:#0a0a18;border:1px solid #223;padding:8px;margin-bottom:8px;border-radius:2px}
 .gargalo-area-title{font-size:5px;color:#ffdd44;margin-bottom:5px}
-/* API key banner */
-.api-banner{background:#1a1500;border:2px solid #665500;border-radius:4px;padding:12px;margin-bottom:12px;font-size:5px;color:#ffcc44;line-height:2}
-.api-input{width:100%;background:#0a0a18;border:1px solid #445;color:#02FFFF;font-family:'Press Start 2P',monospace,sans-serif;font-size:5px;padding:6px 8px;border-radius:2px;margin-top:6px}
-.api-input:focus{outline:none;border-color:#02FFFF}
 </style>
 </head>
 <body>
 <div id="app">
-
-<!-- API KEY BANNER -->
-<div class="api-banner" id="api-banner">
-  ⚙ CONFIGURE SUA CHAVE DA API ANTHROPIC PARA ATIVAR A IA<br>
-  <small style="color:#aa8800">Obtenha em: console.anthropic.com → API Keys</small>
-  <input class="api-input" id="api-key-input" type="password" placeholder="sk-ant-..." oninput="saveKey(this.value)">
-</div>
 
 <div class="lvlup" id="lvlup">
   <div class="lvlup-title">★ LEVEL UP! ★</div>
@@ -227,30 +216,56 @@ canvas#avatar{width:56px;height:56px;border:2px solid #445;background:#1a1a2e;bo
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
 <script>
-// ── CHAVE DA API ──
-// Você pode colocar sua chave aqui diretamente (para uso local):
-// const FIXED_API_KEY = 'sk-ant-...';
-// Ou deixar vazia e usar o campo no topo do jogo:
-const FIXED_API_KEY = '';
+function generateInsight(areaName, ans){
+  const score=ans.score, tag=ans.tags[0]||'', isIA=ans.tags.some(t=>t.startsWith('IA:'));
+  if(isIA){
+    const iaTag=(ans.tags.find(t=>t.startsWith('IA:'))||'').replace('IA:','').trim();
+    return `Oportunidade em ${areaName}: ${iaTag||'automação'} pode eliminar esta tarefa repetitiva e liberar capacidade estratégica da equipe.`;
+  }
+  if(score===0){
+    const msgs={
+      'SEM GOVERNANÇA':`Em ${areaName}, a ausência de governança transforma toda demanda em dependência de pessoas — o risco cresce a cada ausência ou saída.`,
+      'OPERAÇÃO REATIVA':`${areaName} opera no modo apaga-incêndio. Sem previsibilidade, a equipe não consegue evoluir — apenas sobreviver ao próximo incidente.`,
+      'BRIEFING AUSENTE':`Sem briefing estruturado, ${areaName} retrabalha sistematicamente. Cada entrega começa errada — o custo invisível é alto.`,
+      'DEPENDÊNCIA CRÍTICA':`Conhecimento concentrado em pessoas em ${areaName} é risco real. Uma saída ou ausência paralisa processos inteiros.`,
+      'ATIVOS DESCENTRALIZADOS':`Materiais dispersos em ${areaName} geram versões erradas e retrabalho. Sem repositório único, o controle é ilusório.`,
+      'URGÊNCIA TOP-DOWN':`Demandas sem planejamento em ${areaName} drenam capacidade operacional e bloqueiam qualquer tentativa de evolução estruturada.`,
+      'PRIORIZAÇÃO AUSENTE':`A ausência de critérios de priorização em ${areaName} significa que quem grita mais alto vence — não o que é mais estratégico.`,
+    };
+    return msgs[tag]||`Gargalo crítico em ${areaName}: ${tag||ans.txt.slice(0,55)}. Este padrão compromete a previsibilidade operacional e exige atenção imediata.`;
+  }
+  if(score===1) return `${areaName} tem esforço, mas sem padronização o resultado depende de quem está presente. O próximo passo é documentar e distribuir o conhecimento.`;
+  if(score===2) return `Base funcional confirmada em ${areaName}. O processo existe e funciona — o próximo nível é automação e eliminação das exceções manuais.`;
+  return `Maturidade confirmada em ${areaName}: ${tag||'prática consolidada'}. Esta área pode servir de referência para o restante da organização.`;
+}
 
-let apiKey = FIXED_API_KEY || localStorage.getItem('fenasbac_api_key') || '';
-function saveKey(v){ apiKey=v; localStorage.setItem('fenasbac_api_key',v); }
-window.addEventListener('DOMContentLoaded',()=>{
-  if(apiKey){ document.getElementById('api-key-input').value=apiKey; }
-});
+function generateDiagnosis(visited, m, mlvl){
+  const criticalAreas=visited.filter(a=>S.areas[a.id].score<40).map(a=>a.name);
+  const allGargalos=visited.flatMap(a=>S.areas[a.id].gargalos);
+  const allIA=visited.flatMap(a=>S.areas[a.id].iaOps).map(t=>t.replace('IA:','').trim());
+  const topG=allGargalos.slice(0,3);
 
-async function callAI(prompt, maxTokens=120){
-  if(!apiKey) return null;
-  const model = maxTokens <= 120 ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-6';
-  try{
-    const r = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model,max_tokens:maxTokens,messages:[{role:'user',content:prompt}]})
-    });
-    const d = await r.json();
-    return d.content?.[0]?.text || null;
-  }catch(e){ return null; }
+  let p1=topG.length>0
+    ?`O mapeamento de ${visited.length} área${visited.length>1?'s':''} revela gargalos sistêmicos concentrados em: ${topG.join(', ')}. ${criticalAreas.length>0?`As áreas ${criticalAreas.join(', ')} apresentam maturidade crítica e exigem intervenção prioritária. `:''}${S.ind.stress>60?`O alto índice de estresse operacional (${S.ind.stress}) indica sobrecarga estrutural — não pontual.`:''}`
+    :`Com ${visited.length} área${visited.length>1?'s':''} mapeada${visited.length>1?'s':''} e maturidade geral de ${m}% (${mlvl}), a organização demonstra bases operacionais em construção.`;
+
+  let p2=allIA.length>0
+    ?`As principais oportunidades de IA identificadas são: ${allIA.slice(0,3).join(', ')}. A automação dessas frentes pode liberar até 30% da capacidade operacional atual para iniciativas estratégicas.`
+    :`Complete mais áreas do mapa para que oportunidades específicas de automação e IA sejam identificadas.`;
+
+  let qw=criticalAreas.length>0
+    ?`Quick win imediato: estruturar canal único de demandas em ${criticalAreas[0]} — resultado visível em 2 semanas, sem investimento em tecnologia.`
+    :allGargalos.includes('RETRABALHO')||allGargalos.includes('BRIEFING FRÁGIL')
+    ?`Quick win imediato: implementar template de briefing padrão — reduz retrabalho em até 50% sem nenhuma ferramenta nova.`
+    :`Quick win imediato: documentar os 3 processos mais críticos das áreas mapeadas — protege o conhecimento e reduz dependência de pessoas.`;
+
+  let rec=m<40
+    ?`Recomendação estratégica: antes de qualquer investimento em tecnologia, a Fenasbac precisa de governança básica — canais definidos, responsáveis claros e documentação mínima.`
+    :m<65
+    ?`Recomendação estratégica: priorize repositórios centralizados, aprovações distribuídas e eliminação das dependências críticas de pessoas.`
+    :`Recomendação estratégica: com bases sólidas, implante agentes de IA nas frentes operacionais identificadas e libere a equipe para inovação.`;
+
+  return `${p1}\n\n${p2}\n\n${qw} ${rec}`;
 }
 
 // ── DADOS ──
@@ -831,7 +846,7 @@ function renderQuestion(area){
   }).join('');
 }
 
-async function selectAnswer(idx){
+function selectAnswer(idx){
   let area=AREAS.find(a=>a.id===S.current);
   let q=area.questions[S.qIdx];
   let ans=q.answers[idx];
@@ -844,18 +859,9 @@ async function selectAnswer(idx){
   gainXP(ans.score===0?5:ans.score===1?8:ans.score===2?10:12);
 
   let iz=document.getElementById('insight-zone');
-  iz.innerHTML=`<div class="insight-box"><span class="cursor">ANALISANDO RESPOSTA...</span></div>`;
   let tagHtml=ans.tags.map(t=>`<span class="gtag ${t.startsWith('IA:')?'cyan':ans.score<=1?'red':'yellow'}">${t}</span>`).join('');
-
-  let aiText=null;
-  if(apiKey){
-    let isGargalo=ans.score<=1;
-    let prompt=isGargalo
-      ?`Consultor de transformação digital. A área de ${area.name} da Fenasbac respondeu: "${ans.txt}" sobre "${q.text}". Em 1 frase direta (máx 45 palavras), nomeie o gargalo organizacional revelado e seu impacto. Sem elogios.`
-      :`Consultor de transformação digital. A área de ${area.name} da Fenasbac respondeu: "${ans.txt}" sobre "${q.text}". Em 1 frase (máx 35 palavras), confirme o ponto positivo e indique o próximo nível de evolução possível.`;
-    aiText=await callAI(prompt,100);
-  }
-  iz.innerHTML=`<div class="insight-box">${aiText||'Resposta registrada. Continue para o diagnóstico final.'}<div class="gargalo-tags">${tagHtml}</div></div>`;
+  let insightText=generateInsight(area.name,ans);
+  iz.innerHTML=`<div class="insight-box">${insightText}<div class="gargalo-tags">${tagHtml}</div></div>`;
 
   let az=document.getElementById('area-actions');az.classList.remove('hidden');
   let btn=document.getElementById('btn-next');
@@ -919,16 +925,7 @@ async function showResult(){
 
   let rt=document.getElementById('diag-text');
   rt.textContent='';rt.classList.add('cursor');
-  let aList=visited.map(a=>`${a.name}(${S.areas[a.id].score}%)`).join(', ')||'nenhuma';
-  let topGargalos=visited.flatMap(a=>S.areas[a.id].gargalos).slice(0,6).join(', ');
-  let topIA=visited.flatMap(a=>S.areas[a.id].iaOps).slice(0,5).join(', ');
-
-  let diagText=null;
-  if(apiKey){
-    let prompt=`Consultor sênior de transformação digital. Diagnóstico executivo em 3 parágrafos (máx 160 palavras) da Fenasbac. Áreas: ${aList}. Gargalos: ${topGargalos||'em mapeamento'}. IA: ${topIA||'em mapeamento'}. Maturidade: ${m}% — ${mlvl}. 1º parágrafo: gargalos sistêmicos. 2º: oportunidades de IA. 3º: 1 quick win e 1 recomendação estratégica. Executivo, direto.`;
-    diagText=await callAI(prompt,400);
-  }
-  let txt=diagText||`Diagnóstico gerado com base nas respostas coletadas.\n\nÁreas mapeadas: ${aList||'nenhuma'}.\nMaturidade geral: ${m}% — ${mlvl}.\n\nConfigure a chave da API Anthropic para diagnóstico completo por IA.`;
+  let txt=generateDiagnosis(visited,m,mlvl);
   S.diagText=txt;
   await typeText(rt,txt);
   rt.classList.remove('cursor');
